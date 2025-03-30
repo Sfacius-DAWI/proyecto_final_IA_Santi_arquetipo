@@ -1,0 +1,178 @@
+---
+description: 
+globs: *.ts
+alwaysApply: false
+---
+# Mejores Prácticas para TypeScript
+
+## 🎯 Visión General
+
+Este conjunto de reglas define las mejores prácticas para escribir código TypeScript mantenible, seguro y eficiente.
+
+## 🚨 REGLAS CRÍTICAS
+
+1. Tipos Explícitos
+- SIEMPRE define tipos explícitos para parámetros de funciones
+- SIEMPRE define tipos de retorno para funciones públicas
+- NUNCA uses `any` sin una justificación documentada
+
+```typescript
+// ✅ CORRECTO
+function sumarNumeros(a: number, b: number): number {
+    return a + b;
+}
+
+// ❌ INCORRECTO
+function sumarNumeros(a, b) {
+    return a + b;
+}
+```
+
+2. Interfaces vs Types
+- USA interfaces para definir objetos y clases
+- USA types para uniones, intersecciones y utilidades
+- EVITA mezclar interfaces y types sin necesidad
+
+```typescript
+// ✅ CORRECTO
+interface Usuario {
+    id: number;
+    nombre: string;
+}
+
+type ResultadoOperacion = "exito" | "error";
+
+// ❌ INCORRECTO
+type Usuario = {
+    id: number;
+    nombre: string;
+}
+```
+
+3. Null y Undefined
+- USA undefined para valores opcionales
+- EVITA null excepto cuando sea necesario para APIs externas
+- SIEMPRE usa el operador de optional chaining (?.)
+
+```typescript
+// ✅ CORRECTO
+interface Configuracion {
+    tema?: string;
+    idioma: string;
+}
+
+// ❌ INCORRECTO
+interface Configuracion {
+    tema: string | null;
+    idioma: string;
+}
+```
+
+## 📝 Convenciones de Nomenclatura
+
+1. Nombres de Interfaces
+- USAR PascalCase
+- PREFIJO 'I' opcional pero consistente en todo el proyecto
+
+```typescript
+// ✅ CORRECTO
+interface UserProfile {}
+// o
+interface IUserProfile {}
+
+// ❌ INCORRECTO
+interface userProfile {}
+```
+
+2. Tipos Genéricos
+- USAR T, K, V para tipos simples
+- USAR nombres descriptivos para tipos complejos
+
+```typescript
+// ✅ CORRECTO
+function obtenerPrimero<T>(array: T[]): T {}
+interface Respuesta<TData> {}
+
+// ❌ INCORRECTO
+function obtenerPrimero<Tipo>(array: Tipo[]): Tipo {}
+```
+
+## 🛡️ Seguridad de Tipos
+
+1. Strict Mode
+- SIEMPRE habilitar `strict: true` en tsconfig.json
+- NUNCA deshabilitar comprobaciones estrictas sin justificación
+
+2. Aserciones de Tipo
+- EVITAR aserciones de tipo (as) cuando sea posible
+- USAR guardas de tipo en su lugar
+
+```typescript
+// ✅ CORRECTO
+function esString(valor: unknown): valor is string {
+    return typeof valor === 'string';
+}
+
+// ❌ INCORRECTO
+const valor = dato as string;
+```
+
+## 🏗️ Arquitectura y Organización
+
+1. Módulos
+- USAR imports/exports con nombre en lugar de exports default
+- ORGANIZAR imports por grupos (externos, internos, tipos)
+
+```typescript
+// ✅ CORRECTO
+import { Component } from 'react';
+import { Usuario } from './tipos';
+import { formatearFecha } from './utilidades';
+
+// ❌ INCORRECTO
+import React from 'react';
+import formatearFecha from './utilidades';
+```
+
+2. Barrel Exports
+- USAR barrel exports (index.ts) para módulos relacionados
+- MANTENER la estructura de carpetas plana cuando sea posible
+
+## 🧪 Testing
+
+1. Tipos en Tests
+- MANTENER el mismo nivel de tipado en código de prueba
+- USAR tipos mock específicos para pruebas
+
+```typescript
+// ✅ CORRECTO
+interface MockUsuario extends Usuario {
+    esMock: true;
+}
+
+// ❌ INCORRECTO
+const mockUsuario: any = { /* ... */ };
+```
+
+## 📚 Documentación
+
+1. JSDoc
+- DOCUMENTAR funciones públicas con JSDoc
+- INCLUIR ejemplos de uso cuando sea apropiado
+
+```typescript
+// ✅ CORRECTO
+/**
+ * Calcula el total de una lista de productos
+ * @param productos - Lista de productos con precios
+ * @returns El total calculado
+ * @throws Si la lista está vacía
+ */
+function calcularTotal(productos: Producto[]): number
+```
+
+## 🔄 Control de Versiones
+
+1. Archivos de Declaración
+- MANTENER archivos .d.ts separados para declaraciones globales
+- EVITAR modificar tipos de bibliotecas directamente

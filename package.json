@@ -1,0 +1,28 @@
+{
+  "name": "mi_arquetipo_santi_propio",
+  "version": "1.0.0",
+  "main": "index.js",
+  "scripts": {
+    "start": "npm run build:backend && concurrently \"npm run start:backend\" \"npm run start:frontend\"",
+    "dev": "concurrently \"npm run dev:backend\" \"npm run dev:frontend\"",
+    "start:backend": "cd backend && npm run start",
+    "build:backend": "cd backend && npm run build",
+    "dev:backend": "cd backend && npm run dev",
+    "start:frontend": "cd frontend && npm run start",
+    "dev:frontend": "cd frontend && npm run dev",
+    "docker:build": "docker-compose build",
+    "docker:up": "docker-compose up -d",
+    "docker:down": "docker-compose down",
+    "docker:snapshot": "docker-compose build && docker-compose up -d"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "description": "",
+  "devDependencies": {
+    "concurrently": "^8.2.2"
+  },
+  "dependencies": {
+    "mi_arquetipo_santi_propio": "file:"
+  }
+}

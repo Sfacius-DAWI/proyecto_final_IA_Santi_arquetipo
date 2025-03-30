@@ -1,0 +1,258 @@
+---
+description: 
+globs: *.tsx
+alwaysApply: false
+---
+# Mejores Prácticas para React + TypeScript con SWC
+
+## 🎯 Visión General
+
+Este conjunto de reglas define las mejores prácticas para desarrollar aplicaciones React modernas usando TypeScript y SWC como compilador.
+
+## 🚨 REGLAS CRÍTICAS PARA COMPONENTES
+
+1. Definición de Componentes
+- SIEMPRE usar componentes funcionales
+- SIEMPRE definir tipos explícitos para props
+- USAR React.FC de manera opcional (preferencia del equipo)
+
+```typescript
+// ✅ CORRECTO
+interface TodoItemProps {
+    id: number;
+    text: string;
+    completed: boolean;
+    onToggle: (id: number) => void;
+}
+
+// Con React.FC
+const TodoItem: React.FC<TodoItemProps> = ({ id, text, completed, onToggle }) => {
+    return (/* ... */);
+};
+
+// Sin React.FC (también válido)
+function TodoItem({ id, text, completed, onToggle }: TodoItemProps) {
+    return (/* ... */);
+}
+
+// ❌ INCORRECTO
+const TodoItem = (props) => {
+    return (/* ... */);
+};
+```
+
+2. Hooks Personalizados
+- PREFIJO 'use' obligatorio
+- TIPOS explícitos para parámetros y retorno
+- DOCUMENTAR efectos secundarios
+
+```typescript
+// ✅ CORRECTO
+function useLocalStorage<T>(key: string, initialValue: T): [T, (value: T) => void] {
+    // implementación...
+}
+
+// ❌ INCORRECTO
+function localStorageHook(key, initialValue) {
+    // implementación...
+}
+```
+
+## 📦 Estructura de Proyecto
+
+1. Organización de Archivos
+```plaintext
+src/
+├── components/
+│   ├── common/
+│   │   ├── Button/
+│   │   │   ├── Button.tsx
+│   │   │   ├── Button.test.tsx
+│   │   │   └── index.ts
+│   ├── features/
+│   │   └── Todo/
+│   │       ├── TodoList.tsx
+│   │       ├── TodoItem.tsx
+│   │       └── types.ts
+├── hooks/
+├── utils/
+└── types/
+```
+
+2. Importaciones y Exportaciones
+- USAR imports con nombre
+- EVITAR imports default
+- IMPLEMENTAR barrel exports
+
+```typescript
+// ✅ CORRECTO
+import { Button } from '@/components/common/Button';
+import { TodoList } from '@/components/features/Todo';
+
+// ❌ INCORRECTO
+import Button from '@/components/common/Button';
+```
+
+## 🎨 Estilos y CSS
+
+1. CSS-in-JS o Módulos CSS
+- USAR CSS Modules o styled-components
+- TIPOS para props de estilo
+
+```typescript
+// ✅ CORRECTO con CSS Modules
+import styles from './Button.module.css';
+
+interface ButtonProps {
+    variant: 'primary' | 'secondary';
+    size: 'small' | 'medium' | 'large';
+}
+
+// ✅ CORRECTO con styled-components
+import styled from 'styled-components';
+
+const StyledButton = styled.button<ButtonProps>`
+    // estilos...
+`;
+```
+
+## 🔄 Estado y Efectos
+
+1. useState y useEffect
+- TIPOS explícitos para estados
+- DEPENDENCIAS explícitas en useEffect
+- EVITAR any en estados
+
+```typescript
+// ✅ CORRECTO
+const [todos, setTodos] = useState<Todo[]>([]);
+
+useEffect(() => {
+    const fetchTodos = async () => {
+        const data = await api.getTodos();
+        setTodos(data);
+    };
+    fetchTodos();
+}, []);
+
+// ❌ INCORRECTO
+const [todos, setTodos] = useState([]);
+```
+
+2. Context API
+- SEPARAR Provider y Context
+- TIPOS explícitos para valor del contexto
+
+```typescript
+// ✅ CORRECTO
+interface TodoContextType {
+    todos: Todo[];
+    addTodo: (text: string) => void;
+}
+
+const TodoContext = createContext<TodoContextType | undefined>(undefined);
+
+export function TodoProvider({ children }: { children: React.ReactNode }) {
+    // implementación...
+}
+```
+
+## 🧪 Testing
+
+1. Testing Library
+- USAR @testing-library/react
+- EVITAR tests basados en implementación
+- TIPOS para renders y eventos
+
+```typescript
+// ✅ CORRECTO
+import { render, screen } from '@testing-library/react';
+
+test('renders todo item', () => {
+    const todo: Todo = {
+        id: 1,
+        text: 'Test todo',
+        completed: false
+    };
+    
+    render(<TodoItem {...todo} />);
+    expect(screen.getByText('Test todo')).toBeInTheDocument();
+});
+```
+
+## ⚡ Optimización con SWC
+
+1. Configuración
+- HABILITAR minification
+- USAR dynamic imports para code splitting
+
+```typescript
+// ✅ CORRECTO
+const TodoList = dynamic(() => import('./TodoList'), {
+    loading: () => <LoadingSpinner />
+});
+
+// Configuración en next.config.js
+const nextConfig = {
+    swcMinify: true,
+    // otras configuraciones...
+};
+```
+
+## 🔍 Control de Tipos
+
+1. Utilidades de Tipos
+- USAR utility types de TypeScript
+- CREAR tipos reutilizables
+
+```typescript
+// ✅ CORRECTO
+type TodoFormData = Pick<Todo, 'text' | 'priority'>;
+type TodoUpdateData = Partial<Todo>;
+
+// Tipos reutilizables
+type LoadingState<T> = {
+    data: T | null;
+    loading: boolean;
+    error: Error | null;
+};
+```
+
+## 📝 Documentación
+
+1. Componentes y Hooks
+- DOCUMENTAR props con JSDoc
+- INCLUIR ejemplos de uso
+
+```typescript
+/**
+ * Componente TodoItem que representa una tarea individual
+ * @param props.id - ID único de la tarea
+ * @param props.text - Texto de la tarea
+ * @param props.completed - Estado de completado
+ * @example
+ * <TodoItem id={1} text="Completar documentación" completed={false} />
+ */
+```
+
+## 🚫 Anti-patrones a Evitar
+
+1. Evitar:
+- ANY
+- PROP DRILLING excesivo
+- EFECTOS innecesarios
+- RENDERS innecesarios
+
+```typescript
+// ❌ EVITAR
+const [state, setState] = useState<any>(); // Usar tipos específicos
+
+// ✅ USAR
+const [state, setState] = useState<TodoState>({
+    items: [],
+    loading: false
+});
+```
+```
+
+Este conjunto de reglas proporciona una base sólida para desarrollar aplicaciones React con TypeScript y SWC. ¿Hay alguna sección específica que te gustaría que expandiera o alguna duda particular?

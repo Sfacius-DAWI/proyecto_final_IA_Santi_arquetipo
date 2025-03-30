@@ -1,0 +1,354 @@
+---
+description: 
+globs: **/backend/**/*.ts
+alwaysApply: false
+---
+# Mejores Prácticas para Fastify + TypeScript
+
+## 🎯 Visión General
+
+Este conjunto de reglas define las mejores prácticas para desarrollar APIs con Fastify y TypeScript, enfocándose en tipo-seguridad, rendimiento y mantenibilidad.
+
+## 🚨 REGLAS CRÍTICAS
+
+1. Configuración Inicial
+- SIEMPRE usar @fastify/type-provider-typebox
+- DEFINIR esquemas con TypeBox
+- HABILITAR strict mode en TypeScript
+
+```typescript
+// ✅ CORRECTO
+import fastify from 'fastify';
+import { TypeBoxTypeProvider } from '@fastify/type-provider-typebox';
+import { Type } from '@sinclair/typebox';
+
+const server = fastify().withTypeProvider<TypeBoxTypeProvider>();
+
+// ❌ INCORRECTO
+const server = fastify(); // Sin type provider
+```
+
+2. Definición de Esquemas
+- USAR TypeBox para schemas
+- DEFINIR tipos de respuesta
+- VALIDAR request bodies
+
+```typescript
+// ✅ CORRECTO
+const UserSchema = Type.Object({
+    id: Type.String({ format: 'uuid' }),
+    name: Type.String(),
+    email: Type.String({ format: 'email' }),
+    age: Type.Number({ minimum: 0 })
+});
+
+type User = Static<typeof UserSchema>;
+
+server.post('/users', {
+    schema: {
+        body: UserSchema,
+        response: {
+            201: UserSchema
+        }
+    }
+}, async (request, reply) => {
+    const user = request.body;
+    // TypeScript conoce el tipo de user
+    return user;
+});
+
+// ❌ INCORRECTO
+server.post('/users', async (request) => {
+    const user = request.body; // tipo any
+    return user;
+});
+```
+
+## 📁 Estructura del Proyecto
+
+```plaintext
+src/
+├── plugins/
+│   ├── database.ts
+│   └── auth.ts
+├── routes/
+│   ├── users/
+│   │   ├── schemas.ts
+│   │   ├── handlers.ts
+│   │   └── index.ts
+│   └── products/
+├── services/
+├── types/
+└── utils/
+```
+
+## 🔒 Plugins y Decoradores
+
+1. Definición de Plugins
+- TIPOS explícitos para opciones
+- DECLARAR tipos para decoradores
+
+```typescript
+// ✅ CORRECTO
+interface PluginOptions {
+    prefix: string;
+    timeout: number;
+}
+
+const myPlugin: FastifyPluginAsync<PluginOptions> = async (
+    fastify,
+    opts
+) => {
+    fastify.decorate('utilidad', (msg: string) => {
+        return `Procesado: ${msg}`;
+    });
+};
+
+// Declaración de tipos para el decorador
+declare module 'fastify' {
+    interface FastifyInstance {
+        utilidad: (msg: string) => string;
+    }
+}
+
+// ❌ INCORRECTO
+const myPlugin = async (fastify, opts) => {
+    fastify.decorate('utilidad', (msg) => {
+        return `Procesado: ${msg}`;
+    });
+};
+```
+
+## 🛣️ Rutas y Controladores
+
+1. Definición de Rutas
+- SEPARAR schemas de handlers
+- USAR tipos genéricos de Fastify
+- IMPLEMENTAR rate limiting
+
+```typescript
+// ✅ CORRECTO
+const routes: FastifyPluginAsync = async (fastify) => {
+    fastify.route<{
+        Body: typeof CreateUserSchema;
+        Reply: typeof UserResponseSchema;
+    }>({
+        method: 'POST',
+        url: '/users',
+        schema: {
+            body: CreateUserSchema,
+            response: {
+                201: UserResponseSchema
+            }
+        },
+        handler: async (request, reply) => {
+            const user = await createUser(request.body);
+            return reply.code(201).send(user);
+        }
+    });
+};
+
+// ❌ INCORRECTO
+fastify.post('/users', async (request, reply) => {
+    const user = await createUser(request.body);
+    return user;
+});
+```
+
+## 🔄 Hooks y Middleware
+
+1. Hooks Tipados
+- DEFINIR tipos para hooks
+- USAR preValidation para autenticación
+- IMPLEMENTAR error handling
+
+```typescript
+// ✅ CORRECTO
+const authHook: preValidationHookHandler = async (request, reply) => {
+    const token = request.headers.authorization;
+    if (!token) {
+        throw new Error('No autorizado');
+    }
+    const user = await validateToken(token);
+    request.user = user;
+};
+
+// Tipos para request
+declare module 'fastify' {
+    interface FastifyRequest {
+        user?: User;
+    }
+}
+
+// ❌ INCORRECTO
+const authHook = async (request, reply) => {
+    const token = request.headers.authorization;
+    request.user = await validateToken(token);
+};
+```
+
+## 🗃️ Manejo de Base de Datos
+
+1. Conexiones y Queries
+- USAR tipos para modelos
+- IMPLEMENTAR connection pooling
+- MANEJAR errores de DB
+
+```typescript
+// ✅ CORRECTO
+interface DatabaseConfig {
+    host: string;
+    port: number;
+    user: string;
+    password: string;
+    database: string;
+}
+
+const dbPlugin: FastifyPluginAsync<DatabaseConfig> = async (
+    fastify,
+    options
+) => {
+    const pool = await createPool(options);
+    
+    fastify.decorate('db', {
+        async query<T>(sql: string, params?: unknown[]) {
+            return pool.query<T>(sql, params);
+        }
+    });
+};
+
+// ❌ INCORRECTO
+const db = await createPool({
+    // configuración sin tipos
+});
+```
+
+## 🧪 Testing
+
+1. Tests Tipados
+- USAR light-my-request
+- IMPLEMENTAR fixtures tipadas
+- MOCK servicios externos
+
+```typescript
+// ✅ CORRECTO
+describe('User API', () => {
+    const app = buildTestServer();
+
+    it('should create user', async () => {
+        const response = await app.inject({
+            method: 'POST',
+            url: '/users',
+            payload: {
+                name: 'Test User',
+                email: 'test@example.com'
+            }
+        });
+
+        const user: User = response.json();
+        expect(response.statusCode).toBe(201);
+        expect(user.name).toBe('Test User');
+    });
+});
+```
+
+## 🔍 Logging y Monitoreo
+
+1. Configuración de Logger
+- TIPOS para objetos de log
+- NIVELES de log apropiados
+- SERIALIZERS personalizados
+
+```typescript
+// ✅ CORRECTO
+interface LoggerOptions {
+    level: 'info' | 'error' | 'debug';
+    prettyPrint: boolean;
+}
+
+const logger = fastify({
+    logger: {
+        level: 'info',
+        serializers: {
+            req(request) {
+                return {
+                    method: request.method,
+                    url: request.url,
+                    headers: request.headers
+                };
+            }
+        }
+    }
+});
+
+// ❌ INCORRECTO
+const logger = fastify({
+    logger: true
+});
+```
+
+## 🔐 Seguridad
+
+1. Mejores Prácticas
+- IMPLEMENTAR rate limiting
+- VALIDAR inputs
+- MANEJAR CORS
+
+```typescript
+// ✅ CORRECTO
+await fastify.register(import('@fastify/rate-limit'), {
+    max: 100,
+    timeWindow: '1 minute'
+});
+
+await fastify.register(import('@fastify/cors'), {
+    origin: (origin, cb) => {
+        const hostname = new URL(origin).hostname;
+        if(hostname === "localhost"){
+            cb(null, true);
+            return;
+        }
+        cb(new Error("Not allowed"), false);
+    }
+});
+
+// ❌ INCORRECTO
+await fastify.register(import('@fastify/cors'), {
+    origin: '*'
+});
+```
+
+## 📝 Documentación
+
+1. OpenAPI/Swagger
+- GENERAR docs automáticamente
+- DOCUMENTAR schemas
+- EJEMPLOS de uso
+
+```typescript
+// ✅ CORRECTO
+const routes: FastifyPluginAsync = async (fastify) => {
+    fastify.route({
+        method: 'POST',
+        url: '/users',
+        schema: {
+            description: 'Crear nuevo usuario',
+            tags: ['users'],
+            body: CreateUserSchema,
+            response: {
+                201: {
+                    description: 'Usuario creado exitosamente',
+                    type: 'object',
+                    properties: {
+                        id: { type: 'string', format: 'uuid' },
+                        name: { type: 'string' }
+                    }
+                }
+            }
+        },
+        handler: createUserHandler
+    });
+};
+```
+
+Este conjunto de reglas proporciona una base sólida para desarrollar APIs con Fastify y TypeScript. ¿Hay alguna sección específica que te gustaría que expandiera o alguna duda particular?

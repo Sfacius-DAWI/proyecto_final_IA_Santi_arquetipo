@@ -1,0 +1,17 @@
+{
+  "name": "frontend",
+  "version": "1.0.0",
+  "main": "index.js",
+  "scripts": {
+    "dev": "cd santi-proyect && npm run dev",
+    "start": "cd santi-proyect && npm run build && npm run preview",
+    "build": "cd santi-proyect && npm run build"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "description": "",
+  "dependencies": {
+    "frontend": "file:"
+  }
+}
