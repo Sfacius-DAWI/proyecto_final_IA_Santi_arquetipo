@@ -1,23 +1,20 @@
-FROM node:18-alpine as build
+FROM node:20-alpine AS base
 
+# Install dependencies
+FROM base AS deps
 WORKDIR /app
+COPY astro-project/package.json astro-project/package-lock.json* ./
+RUN npm ci
 
-# Copiar archivos de package.json
-COPY package*.json ./
-COPY santi-proyect/package*.json ./santi-proyect/
-
-# Instalar dependencias
-RUN npm install
-RUN cd santi-proyect && npm install
-
-# Copiar código fuente
-COPY . .
-
-# Construir aplicación
+# Build the app
+FROM base AS builder
+WORKDIR /app
+COPY --from=deps /app/node_modules ./node_modules
+COPY astro-project/ ./
 RUN npm run build
 
-# Servidor de producción
+# Production image
 FROM nginx:alpine
-COPY --from=build /app/santi-proyect/dist /usr/share/nginx/html
+COPY --from=builder /app/dist /usr/share/nginx/html
 EXPOSE 80
 CMD ["nginx", "-g", "daemon off;"] 

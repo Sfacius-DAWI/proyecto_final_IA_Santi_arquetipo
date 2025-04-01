@@ -1,16 +1,14 @@
 {
   "name": "frontend",
   "version": "1.0.0",
-  "main": "index.js",
+  "description": "Frontend con Astro y React",
   "scripts": {
-    "dev": "cd santi-proyect && npm run dev",
-    "start": "cd santi-proyect && npm run build && npm run preview",
-    "build": "cd santi-proyect && npm run build"
+    "dev": "cd astro-project && npm run dev",
+    "build": "cd astro-project && npm run build",
+    "preview": "cd astro-project && npm run preview"
   },
-  "keywords": [],
   "author": "",
   "license": "ISC",
-  "description": "",
   "dependencies": {
     "frontend": "file:"
   }
