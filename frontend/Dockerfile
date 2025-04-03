@@ -5,8 +5,8 @@ WORKDIR /app
 # Copiar archivos de package.json
 COPY santi-proyect/package*.json ./
 
-# Instalar dependencias
-RUN npm install
+# Instalar dependencias con --legacy-peer-deps para resolver conflictos
+RUN npm install --legacy-peer-deps
 
 # Copiar código fuente
 COPY santi-proyect/ .
