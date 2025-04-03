@@ -1,4 +1,4 @@
-FROM mcr.microsoft.com/appsvc/node:18-lts as build
+FROM node:18-alpine as build
 
 WORKDIR /app
 

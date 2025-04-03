@@ -19,7 +19,7 @@ jobs:
       # Verificar disponibilidad de imágenes base
       - name: Check base images availability
         run: |
-          docker pull mcr.microsoft.com/appsvc/node:18-lts || { echo "Error: Base image for Node not found"; exit 1; }
+          docker pull node:18-alpine || { echo "Error: Base image for Node not found"; exit 1; }
           docker pull nginx:alpine || { echo "Error: Base image for Nginx not found"; exit 1; }
       
       # Construir la imagen de frontend
