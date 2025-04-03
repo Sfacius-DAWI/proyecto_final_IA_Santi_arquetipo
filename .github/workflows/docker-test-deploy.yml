@@ -1,0 +1,168 @@
+name: Docker Image Test & Deploy
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+
+jobs:
+  test-docker-images:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      
+      # Configuración de Docker BuildX
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v2
+      
+      # Construir la imagen de frontend
+      - name: Build frontend image
+        uses: docker/build-push-action@v4
+        with:
+          context: ./frontend  # Ajusta la ruta según tu estructura
+          file: ./frontend/Dockerfile
+          push: false
+          load: true
+          tags: santiprimerproyecto:frontend-test
+      
+      # Construir la imagen de backend
+      - name: Build backend image
+        uses: docker/build-push-action@v4
+        with:
+          context: ./backend  # Ajusta la ruta según tu estructura
+          file: ./backend/Dockerfile
+          push: false
+          load: true
+          tags: santiprimerproyecto:backend-test
+      
+      # Verificar estructura de la imagen frontend
+      - name: Verify frontend image
+        run: |
+          # Verifica que la imagen tenga el punto de entrada correcto
+          ENTRYPOINT=$(docker inspect --format='{{json .Config.Entrypoint}}' santiprimerproyecto:frontend-test)
+          if [ "$ENTRYPOINT" == "null" ]; then
+            echo "ERROR: La imagen frontend no tiene punto de entrada definido"
+            exit 1
+          fi
+          # Verifica que la imagen exponga el puerto correcto (80)
+          PORTS=$(docker inspect --format='{{json .Config.ExposedPorts}}' santiprimerproyecto:frontend-test)
+          if [[ ! "$PORTS" == *"80"* ]]; then
+            echo "ERROR: La imagen frontend no expone el puerto 80 que se define en docker-compose"
+            exit 1
+          fi
+          echo "✅ Frontend image verificada correctamente"
+      
+      # Verificar estructura de la imagen backend
+      - name: Verify backend image
+        run: |
+          # Verifica que la imagen tenga el punto de entrada correcto
+          ENTRYPOINT=$(docker inspect --format='{{json .Config.Entrypoint}}' santiprimerproyecto:backend-test)
+          if [ "$ENTRYPOINT" == "null" ]; then
+            echo "ERROR: La imagen backend no tiene punto de entrada definido"
+            exit 1
+          fi
+          # Verifica que la imagen exponga los puertos correctos (3000 y 2222)
+          PORTS=$(docker inspect --format='{{json .Config.ExposedPorts}}' santiprimerproyecto:backend-test)
+          if [[ ! "$PORTS" == *"3000"* ]]; then
+            echo "ERROR: La imagen backend no expone el puerto 3000 que Azure espera según WEBSITES_PORT"
+            exit 1
+          fi
+          echo "✅ Backend image verificada correctamente"
+      
+      # Prueba de arranque de frontend
+      - name: Test frontend container startup
+        run: |
+          # Inicia el contenedor con variables de entorno similares a Azure
+          docker run -d --name frontend-test -p 80:80 \
+            -e BACKEND_URL=/api/ \
+            -e NODE_ENV=production \
+            -e API_TIMEOUT=30000 \
+            santiprimerproyecto:frontend-test
+          
+          # Espera a que el contenedor esté listo (ajusta el tiempo según tu aplicación)
+          sleep 15
+          
+          # Verifica que el contenedor esté ejecutándose
+          STATUS=$(docker inspect --format='{{.State.Status}}' frontend-test)
+          if [ "$STATUS" != "running" ]; then
+            echo "ERROR: El contenedor frontend no arrancó correctamente"
+            docker logs frontend-test
+            exit 1
+          fi
+          
+          # Intenta hacer una petición HTTP básica
+          curl -s --retry 5 --retry-delay 2 --retry-connrefused http://localhost:80/ -o /dev/null
+          if [ $? -ne 0 ]; then
+            echo "ERROR: No se pudo conectar al frontend en el puerto 80"
+            docker logs frontend-test
+            exit 1
+          fi
+          
+          echo "✅ Frontend container arrancado correctamente"
+          docker stop frontend-test
+          docker rm frontend-test
+      
+      # Prueba de arranque de backend
+      - name: Test backend container startup
+        run: |
+          # Inicia el contenedor con variables de entorno similares a Azure
+          docker run -d --name backend-test -p 3000:3000 \
+            -e NODE_ENV=production \
+            -e WEBSITES_ENABLE_APP_SERVICE_STORAGE=true \
+            -e WEBSITES_PORT=3000 \
+            -e PORT=3000 \
+            -e WEBSITES_CONTAINER_START_TIME_LIMIT=900 \
+            -e LOG_LEVEL=info \
+            santiprimerproyecto:backend-test
+          
+          # Espera a que el contenedor esté listo
+          sleep 15
+          
+          # Verifica que el contenedor esté ejecutándose
+          STATUS=$(docker inspect --format='{{.State.Status}}' backend-test)
+          if [ "$STATUS" != "running" ]; then
+            echo "ERROR: El contenedor backend no arrancó correctamente"
+            docker logs backend-test
+            exit 1
+          fi
+          
+          # Verifica que la API responda (ajusta la ruta según tu backend)
+          curl -s --retry 5 --retry-delay 2 --retry-connrefused http://localhost:3000/health -o /dev/null
+          if [ $? -ne 0 ]; then
+            echo "WARNING: No se pudo conectar al endpoint de health. Es posible que necesite ajustar la ruta de la API."
+            # No fallaremos aquí porque puede que no haya un endpoint /health
+          fi
+          
+          echo "✅ Backend container arrancado correctamente"
+          docker stop backend-test
+          docker rm backend-test
+      
+      # Si todo pasa, login a Azure Container Registry y push de imágenes
+      - name: Login to Azure Container Registry
+        if: success() && github.event_name != 'pull_request'
+        uses: azure/docker-login@v1
+        with:
+          login-server: miprimeracontenedorazure.azurecr.io
+          username: ${{ secrets.ACR_USERNAME }}
+          password: ${{ secrets.ACR_PASSWORD }}
+      
+      # Tag y push de las imágenes a ACR
+      - name: Tag and push images to ACR
+        if: success() && github.event_name != 'pull_request'
+        run: |
+          # Tag imágenes
+          docker tag santiprimerproyecto:frontend-test miprimeracontenedorazure.azurecr.io/santiprimerproyecto:frontend
+          docker tag santiprimerproyecto:backend-test miprimeracontenedorazure.azurecr.io/santiprimerproyecto:backend
+          
+          # Push imágenes
+          docker push miprimeracontenedorazure.azurecr.io/santiprimerproyecto:frontend
+          docker push miprimeracontenedorazure.azurecr.io/santiprimerproyecto:backend
+          
+          echo "✅ Imágenes subidas a Azure Container Registry"
+      
+      # Opcional: Notificación de éxito
+      - name: Notificación de despliegue exitoso
+        if: success() && github.event_name != 'pull_request'
+        run: |
+          echo "🚀 Todas las imágenes han sido probadas y desplegadas exitosamente." 

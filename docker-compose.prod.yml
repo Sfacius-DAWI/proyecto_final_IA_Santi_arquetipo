@@ -1,0 +1,56 @@
+version: '3.8'
+
+services:
+  backend:
+    image: santidaw/santiprimerproyecto:backend
+    container_name: mi-arquetipo-backend
+    expose:
+      - "3000"
+      - "2222"
+    environment:
+      - NODE_ENV=production
+      - SSH_PASSWD=root:Docker!
+      - WEBSITES_ENABLE_APP_SERVICE_STORAGE=true
+      - WEBSITES_PORT=3000
+      - PORT=3000
+      - WEBSITES_CONTAINER_START_TIME_LIMIT=900
+      - LOG_LEVEL=info
+    networks:
+      app_network:
+        aliases:
+          - backend
+
+  frontend:
+    image: santidaw/santiprimerproyecto:frontend
+    container_name: mi-arquetipo-frontend
+    expose:
+      - "80"
+    environment:
+      - BACKEND_URL=/api/
+      - NODE_ENV=production
+      - API_TIMEOUT=30000
+    depends_on:
+      - backend
+    networks:
+      app_network:
+        aliases:
+          - frontend
+
+  proxy:
+    image: nginx
+    container_name: reverse-proxy
+    ports:
+      - "8080:80"
+    volumes:
+      - ./proxy/nginx.conf:/etc/nginx/conf.d/default.conf
+    depends_on:
+      - frontend
+      - backend
+    networks:
+      app_network:
+        aliases:
+          - proxy
+
+networks:
+  app_network:
+    driver: bridge 
