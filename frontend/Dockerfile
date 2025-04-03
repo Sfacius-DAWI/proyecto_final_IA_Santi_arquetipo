@@ -15,7 +15,7 @@ COPY santi-proyect/ .
 RUN npm run build
 
 # Servidor de producción
-FROM mcr.microsoft.com/appsvc/nginx:latest
+FROM nginx:alpine
 
 # Crear directorios requeridos por Azure App Service
 RUN mkdir -p /home/LogFiles /opt/startup
@@ -34,10 +34,10 @@ RUN chmod +x /opt/startup/docker-entrypoint.sh
 ENV NODE_ENV=production
 ENV BACKEND_URL=/api/
 ENV API_TIMEOUT=30000
-ENV PORT=8080
-ENV WEBSITES_PORT=8080
+ENV PORT=80
+ENV WEBSITES_PORT=80
 
-EXPOSE 8080
+EXPOSE 80
 
 ENTRYPOINT ["/opt/startup/docker-entrypoint.sh"]
 CMD ["nginx", "-g", "daemon off;"] 
