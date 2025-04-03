@@ -81,7 +81,7 @@ jobs:
         run: |
           # Inicia el contenedor con variables de entorno similares a Azure
           docker run -d --name frontend-test -p 80:80 \
-            -e BACKEND_URL=/api/ \
+            -e BACKEND_URL=http://localhost:3000/ \
             -e NODE_ENV=production \
             -e API_TIMEOUT=30000 \
             santiprimerproyecto:frontend-test
