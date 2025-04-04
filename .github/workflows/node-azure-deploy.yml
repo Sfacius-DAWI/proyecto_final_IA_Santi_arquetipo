@@ -118,35 +118,6 @@ jobs:
           docker-compose.azure.processed.yml
           ./proxy/nginx.conf
           
-    # Verificar conexión a Azure con CLI
-    - name: Azure Login
-      uses: azure/login@v1
-      with:
-        creds: ${{ secrets.AZURE_CREDENTIALS }}
-
-    # Verificar que la Web App existe
-    - name: Check Azure Web App existence
-      run: |
-        echo "Verificando existencia de la aplicación web ${AZURE_WEBAPP_NAME}..."
-        APP_JSON=$(az webapp show --name ${{ env.AZURE_WEBAPP_NAME }} --resource-group your-resource-group --query "{name:name,kind:kind,state:state}" -o json || echo '{"name":"","kind":"","state":""}')
-        echo "Información de la aplicación:"
-        echo "$APP_JSON"
-        
-        if [[ $(echo "$APP_JSON" | jq -r '.name') == "" ]]; then
-          echo "⚠️ ADVERTENCIA: La aplicación web '${{ env.AZURE_WEBAPP_NAME }}' no existe o no es accesible. Verifica el nombre y los permisos."
-          echo "Si necesitas crear una, ejecuta:"
-          echo "az webapp create --resource-group <tu-grupo-recursos> --plan <tu-plan-app-service> --name ${{ env.AZURE_WEBAPP_NAME }} --multicontainer-config-type compose --multicontainer-config-file docker-compose.azure.processed.yml"
-        else
-          echo "✅ Aplicación web encontrada: $(echo "$APP_JSON" | jq -r '.name')"
-          echo "Tipo: $(echo "$APP_JSON" | jq -r '.kind')"
-          echo "Estado: $(echo "$APP_JSON" | jq -r '.state')"
-          
-          # Verificar si es una aplicación multicontenedor
-          if [[ ! $(echo "$APP_JSON" | jq -r '.kind') == *"container"* ]]; then
-            echo "⚠️ ADVERTENCIA: La aplicación no parece ser de tipo contenedor. Debe ser un 'Web App for Containers'."
-          fi
-        fi
-        
     # Desplegar a Azure Web App for Containers (Multi-container)
     - name: Deploy to Azure Web App
       uses: azure/webapps-deploy@v2
