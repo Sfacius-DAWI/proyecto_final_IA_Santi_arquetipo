@@ -8,8 +8,8 @@ on:
 env:
   AZURE_WEBAPP_NAME: your-app-name    # Nombre de tu Azure Web App
   CONTAINER_REGISTRY: miprimeracontenedorazure.azurecr.io  # URL de Azure Container Registry
-  FRONTEND_IMAGE: santiprimerproyecto:frontend
-  BACKEND_IMAGE: santiprimerproyecto:backend
+  FRONTEND_IMAGE: santiprimerproyecto-frontend
+  BACKEND_IMAGE: santiprimerproyecto-backend
   IMAGE_TAG: latest  # Tag para las imágenes
 
 permissions:
