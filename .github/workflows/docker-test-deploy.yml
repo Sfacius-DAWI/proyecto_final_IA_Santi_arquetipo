@@ -150,8 +150,8 @@ jobs:
         uses: azure/docker-login@v1
         with:
           login-server: paqueteturisiticoscontainer.azurecr.io
-          username: PaqueteTurisiticosContainer
-          password: 55zIAo1Hw2uasKw5J0yDdR18WA+EHBVvH1OmnpucBN+ACRDXEwPK
+          username: ${{ secrets.ACR_USERNAME }}
+          password: ${{ secrets.ACR_PASSWORD }}
       
       # Tag y push de las imágenes a ACR
       - name: Tag and push images to ACR
