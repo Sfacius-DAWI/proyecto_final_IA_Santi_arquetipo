@@ -3,7 +3,7 @@ version: '3.8' # Es recomendable especificar una versión
 
 services:
   backend:
-    image: santidaw/santiprimerproyecto:backend
+    image: paqueteturisiticoscontainer.azurecr.io/santiprimerproyecto:backend
     container_name: mi-arquetipo-backend
     build:
       context: ./backend
@@ -30,7 +30,7 @@ services:
       - app_network # Aseguramos que todos los servicios estén en la misma red
 
   frontend:
-    image: santidaw/santiprimerproyecto:frontend
+    image: paqueteturisiticoscontainer.azurecr.io/santiprimerproyecto:frontend
     container_name: mi-arquetipo-frontend
     build:
       context: ./frontend

@@ -1,4 +1,4 @@
-name: Docker Image Test & Deploy
+name: Docker Image Test & Push to ACR
 
 on:
   push:
@@ -144,31 +144,25 @@ jobs:
           docker stop backend-test
           docker rm backend-test
       
-      # Si todo pasa, login a Azure Container Registry y push de imágenes
+      # Login a Azure Container Registry
       - name: Login to Azure Container Registry
         if: success() && github.event_name != 'pull_request'
         uses: azure/docker-login@v1
         with:
-          login-server: miprimeracontenedorazure.azurecr.io
-          username: ${{ secrets.ACR_USERNAME }}
-          password: ${{ secrets.ACR_PASSWORD }}
+          login-server: paqueteturisiticoscontainer.azurecr.io
+          username: PaqueteTurisiticosContainer
+          password: 55zIAo1Hw2uasKw5J0yDdR18WA+EHBVvH1OmnpucBN+ACRDXEwPK
       
       # Tag y push de las imágenes a ACR
       - name: Tag and push images to ACR
         if: success() && github.event_name != 'pull_request'
         run: |
           # Tag imágenes
-          docker tag santiprimerproyecto:frontend-test miprimeracontenedorazure.azurecr.io/santiprimerproyecto:frontend
-          docker tag santiprimerproyecto:backend-test miprimeracontenedorazure.azurecr.io/santiprimerproyecto:backend
+          docker tag santiprimerproyecto:frontend-test paqueteturisiticoscontainer.azurecr.io/santiprimerproyecto:frontend
+          docker tag santiprimerproyecto:backend-test paqueteturisiticoscontainer.azurecr.io/santiprimerproyecto:backend
           
           # Push imágenes
-          docker push miprimeracontenedorazure.azurecr.io/santiprimerproyecto:frontend
-          docker push miprimeracontenedorazure.azurecr.io/santiprimerproyecto:backend
+          docker push paqueteturisiticoscontainer.azurecr.io/santiprimerproyecto:frontend
+          docker push paqueteturisiticoscontainer.azurecr.io/santiprimerproyecto:backend
           
-          echo "✅ Imágenes subidas a Azure Container Registry"
-      
-      # Opcional: Notificación de éxito
-      - name: Notificación de despliegue exitoso
-        if: success() && github.event_name != 'pull_request'
-        run: |
-          echo "🚀 Todas las imágenes han sido probadas y desplegadas exitosamente." 
+          echo "✅ Imágenes subidas a Azure Container Registry" 
