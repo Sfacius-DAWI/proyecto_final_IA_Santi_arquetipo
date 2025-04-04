@@ -118,11 +118,25 @@ jobs:
           docker-compose.azure.processed.yml
           ./proxy/nginx.conf
           
+    # Verificar que tenemos el archivo necesario
+    - name: Verificar archivo de configuración
+      run: |
+        echo "Contenido del directorio:"
+        ls -la
+        echo "Contenido del archivo docker-compose.azure.processed.yml:"
+        cat docker-compose.azure.processed.yml
+        echo "Verificando que el archivo existe:"
+        if [ -f docker-compose.azure.processed.yml ]; then
+          echo "✅ El archivo de configuración existe"
+        else
+          echo "❌ Error: El archivo no existe"
+          exit 1
+        fi
+          
     # Desplegar a Azure Web App for Containers (Multi-container)
     - name: Deploy to Azure Web App
       uses: azure/webapps-deploy@v2
       with:
         app-name: ${{ env.AZURE_WEBAPP_NAME }}
         publish-profile: ${{ secrets.AZURE_WEBAPP_PUBLISH_PROFILE }}
-        images: '${{ env.CONTAINER_REGISTRY }}/${{ env.FRONTEND_IMAGE }}:${{ env.IMAGE_TAG }}, ${{ env.CONTAINER_REGISTRY }}/${{ env.BACKEND_IMAGE }}:${{ env.IMAGE_TAG }}'
         configuration-file: docker-compose.azure.processed.yml
