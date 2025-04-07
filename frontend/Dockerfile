@@ -14,30 +14,30 @@ COPY santi-proyect/ .
 # Construir aplicación
 RUN npm run build
 
-# Servidor de producción
-FROM nginx:alpine
+# Etapa de producción - también usamos node
+FROM node:18-alpine
 
-# Crear directorios requeridos por Azure App Service
-RUN mkdir -p /home/LogFiles /opt/startup
+WORKDIR /app
 
-# Copiar archivos estáticos
-COPY --from=build /app/dist /home/site/wwwroot
+# Copiar archivos necesarios desde el stage de build
+COPY --from=build /app/dist ./dist
+COPY --from=build /app/package*.json ./
+COPY --from=build /app/server.js ./
 
-# Copiar configuración de nginx
-COPY santi-proyect/nginx.conf /etc/nginx/conf.d/default.conf.template
+# Instalar solo dependencias de producción
+RUN npm install --production --legacy-peer-deps
 
-# Script para procesar variables de entorno y iniciar nginx
-COPY docker-entrypoint.sh /opt/startup/docker-entrypoint.sh
-RUN chmod +x /opt/startup/docker-entrypoint.sh
-
-# Configurar entorno
+# Variables de entorno para microservicios
 ENV NODE_ENV=production
+ENV PORT=3000
 ENV BACKEND_URL=/api/
 ENV API_TIMEOUT=30000
-ENV PORT=80
-ENV WEBSITES_PORT=80
 
-EXPOSE 80
+# Healthcheck para orquestación de microservicios
+HEALTHCHECK --interval=30s --timeout=5s \
+  CMD wget --no-verbose --tries=1 --spider http://localhost:3000/health || exit 1
 
-ENTRYPOINT ["/opt/startup/docker-entrypoint.sh"]
-CMD ["nginx", "-g", "daemon off;"] 
+EXPOSE 3000
+
+# Comando para iniciar el servicio (directamente, sin usar docker-entrypoint.sh)
+CMD ["node", "server.js"]

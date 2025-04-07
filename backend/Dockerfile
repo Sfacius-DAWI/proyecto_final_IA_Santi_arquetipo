@@ -1,31 +1,41 @@
-FROM node:18-alpine
+# Build stage
+FROM node:18-alpine as builder
 
-# Configurar SSH
-ENV SSH_PASSWD "root:Docker!"
-RUN mkdir -p /home/LogFiles /opt/startup /home/site/wwwroot
+WORKDIR /app
 
-# Crear directorio para la aplicación
-WORKDIR /home/site/wwwroot
-
-# Copiar archivos de package.json
+# Copiar archivos de package.json e instalar dependencias
 COPY package*.json ./
 RUN npm install --legacy-peer-deps
 
-# Copiar el resto del código
+# Copiar el resto del código y construir
 COPY . .
 RUN npm run build
 
-# Configurar entorno
+# Production stage
+FROM node:18-alpine
+
+WORKDIR /app
+
+# Copiar archivos necesarios desde el stage de build
+COPY --from=builder /app/dist ./dist
+COPY --from=builder /app/package*.json ./
+
+# Instalar solo dependencias de producción
+RUN npm install --production --legacy-peer-deps
+
+# Variables de entorno para microservicios
 ENV NODE_ENV=production
-ENV HOST 0.0.0.0
-ENV PORT 3000
-ENV WEBSITES_PORT=3000
-ENV WEBSITE_HTTPLOGGING_RETENTION_DAYS=7
-ENV WEBSITES_ENABLE_APP_SERVICE_STORAGE=true
-ENV WEBSITES_CONTAINER_START_TIME_LIMIT=900
+ENV HOST=0.0.0.0
+ENV PORT=3000
+ENV API_VERSION=v1
+ENV LOG_LEVEL=info
+ENV REQUEST_TIMEOUT=30000
 
-# Exponer puertos para la aplicación y SSH
-EXPOSE 3000 2222
+# Healthcheck para orquestación de microservicios
+HEALTHCHECK --interval=30s --timeout=5s --retries=3 \
+  CMD wget --no-verbose --tries=1 --spider http://localhost:3000/health || exit 1
 
-# Comando para iniciar la aplicación
-CMD ["npm", "start"] 
+EXPOSE 3000
+
+# Comando para iniciar el microservicio
+CMD ["node", "dist/server.js"]
