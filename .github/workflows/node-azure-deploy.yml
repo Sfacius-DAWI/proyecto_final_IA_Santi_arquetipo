@@ -161,7 +161,7 @@ jobs:
         script: |
           mkdir -p ~/microservices-deploy
           cd ~/microservices-deploy
-          echo "${{ secrets.DOCKER_PASSWORD }}" | docker login -u ${{ env.DOCKER_HUB_USERNAME }} --password-stdin
+          echo "${{ secrets.AZURE_REGISTRY_PASSWORD }}" | docker login ${{ env.REGISTRY }} -u ${{ secrets.AZURE_REGISTRY_USERNAME }} --password-stdin
           wget -O docker-compose.yml ${{ github.server_url }}/${{ github.repository }}/raw/${{ github.sha }}/docker-compose.deploy.yml
           docker compose pull
           docker compose up -d
