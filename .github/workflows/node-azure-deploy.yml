@@ -1,23 +1,36 @@
-name: Multi-Container Deploy to Azure Web App
+name: Deploy Microservices to Environment
 
 on:
   push:
     branches: [ "main" ]
   workflow_dispatch:
+    inputs:
+      environment:
+        description: 'Entorno de despliegue'
+        required: true
+        default: 'staging'
+        type: choice
+        options:
+        - staging
+        - production
 
 env:
-  AZURE_WEBAPP_NAME: your-app-name    # Nombre de tu Azure Web App
-  CONTAINER_REGISTRY: paqueteturisiticoscontainer.azurecr.io  # URL de Azure Container Registry
-  FRONTEND_IMAGE: santiprimerproyecto-frontend
-  BACKEND_IMAGE: santiprimerproyecto-backend
-  IMAGE_TAG: latest  # Tag para la imagen
+  DOCKER_HUB_USERNAME: santidaw
+  FRONTEND_IMAGE: santiprimerproyecto:frontend
+  BACKEND_IMAGE: santiprimerproyecto:backend
+  STAGING_FRONTEND_URL: http://localhost:3000
+  STAGING_BACKEND_URL: http://localhost:3001
+  PROD_FRONTEND_URL: http://your-prod-domain.com
+  PROD_BACKEND_URL: http://api.your-prod-domain.com
 
 permissions:
   contents: read
 
 jobs:
-  build-and-deploy:
+  deploy-microservices:
     runs-on: ubuntu-latest
+    environment: ${{ github.event.inputs.environment || 'staging' }}
+    
     steps:
     - name: Checkout repository
       uses: actions/checkout@v4
@@ -25,12 +38,25 @@ jobs:
     - name: Set up Docker Buildx
       uses: docker/setup-buildx-action@v2
       
-    - name: Log in to Azure Container Registry
+    - name: Log in to Docker Hub
       uses: docker/login-action@v2
       with:
-        registry: ${{ env.CONTAINER_REGISTRY }}
-        username: ${{ secrets.ACR_USERNAME }}
-        password: ${{ secrets.ACR_PASSWORD }}
+        username: ${{ env.DOCKER_HUB_USERNAME }}
+        password: ${{ secrets.DOCKER_PASSWORD }}
+        
+    # Determinar variables según el entorno
+    - name: Set environment variables
+      id: set-env
+      run: |
+        if [[ "${{ github.event.inputs.environment }}" == "production" ]]; then
+          echo "FRONTEND_URL=${{ env.PROD_FRONTEND_URL }}" >> $GITHUB_ENV
+          echo "BACKEND_URL=${{ env.PROD_BACKEND_URL }}" >> $GITHUB_ENV
+          echo "::set-output name=env_name::production"
+        else
+          echo "FRONTEND_URL=${{ env.STAGING_FRONTEND_URL }}" >> $GITHUB_ENV
+          echo "BACKEND_URL=${{ env.STAGING_BACKEND_URL }}" >> $GITHUB_ENV
+          echo "::set-output name=env_name::staging"
+        fi
         
     # Construir y subir imagen del frontend
     - name: Build and push frontend image
@@ -39,7 +65,9 @@ jobs:
         context: ./frontend
         file: ./frontend/Dockerfile
         push: true
-        tags: ${{ env.CONTAINER_REGISTRY }}/${{ env.FRONTEND_IMAGE }}:${{ env.IMAGE_TAG }}
+        tags: ${{ env.DOCKER_HUB_USERNAME }}/${{ env.FRONTEND_IMAGE }}
+        build-args: |
+          BACKEND_URL=${{ env.BACKEND_URL }}
         
     # Construir y subir imagen del backend
     - name: Build and push backend image
@@ -48,42 +76,90 @@ jobs:
         context: ./backend
         file: ./backend/Dockerfile
         push: true
-        tags: ${{ env.CONTAINER_REGISTRY }}/${{ env.BACKEND_IMAGE }}:${{ env.IMAGE_TAG }}
-        
-    # Crear docker-compose.yml para Azure
-    - name: Preparar docker-compose para Azure
+        tags: ${{ env.DOCKER_HUB_USERNAME }}/${{ env.BACKEND_IMAGE }}
+        build-args: |
+          CORS_ORIGIN=${{ env.FRONTEND_URL }}
+          
+    # Crear archivo docker-compose para el despliegue
+    - name: Preparar docker-compose para despliegue
       run: |
-        # Creamos un archivo docker-compose específico para Azure
-        cat > azure-docker-compose.yml << EOF
-        version: '3'
+        cat > docker-compose.deploy.yml << EOF
+        version: '3.8'
+        
         services:
           backend:
-            image: ${CONTAINER_REGISTRY}/${BACKEND_IMAGE}:${IMAGE_TAG}
+            image: ${DOCKER_HUB_USERNAME}/${BACKEND_IMAGE}
+            deploy:
+              replicas: 1
+              restart_policy:
+                condition: on-failure
+            ports:
+              - "3001:3000"
+            environment:
+              - NODE_ENV=production
+              - PORT=3000
+              - LOG_LEVEL=info
+              - API_VERSION=v1
+              - CORS_ORIGIN=${FRONTEND_URL}
+            healthcheck:
+              test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:3000/health"]
+              interval: 30s
+              timeout: 5s
+              retries: 3
+        
+          frontend:
+            image: ${DOCKER_HUB_USERNAME}/${FRONTEND_IMAGE}
+            deploy:
+              replicas: 1
+              restart_policy:
+                condition: on-failure
             ports:
               - "3000:3000"
-              - "2222:2222"
             environment:
               - NODE_ENV=production
-              - SSH_PASSWD=root:Docker!
-              - WEBSITES_ENABLE_APP_SERVICE_STORAGE=true
-              - WEBSITES_PORT=3000
               - PORT=3000
-          
-          frontend:
-            image: ${CONTAINER_REGISTRY}/${FRONTEND_IMAGE}:${IMAGE_TAG}
-            ports:
-              - "80:80"
-            environment:
-              - BACKEND_URL=/api/
-              - NODE_ENV=production
+              - BACKEND_URL=http://backend:3000/
+              - API_TIMEOUT=30000
+            command: ["node", "server.js"]
+            healthcheck:
+              test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:3000/health"]
+              interval: 30s
+              timeout: 5s
+              retries: 3
+            depends_on:
+              - backend
+        
+        networks:
+          default:
+            driver: bridge
         EOF
         
-        cat azure-docker-compose.yml
-    
-    # Desplegar a Azure Web App configurado para multicontenedor
-    - name: Deploy to Azure Web App (Multi-Container)
-      uses: azure/webapps-deploy@v2
+        cat docker-compose.deploy.yml
+        
+    # Archivo de despliegue como artefacto
+    - name: Upload deployment files
+      uses: actions/upload-artifact@v3
       with:
-        app-name: ${{ env.AZURE_WEBAPP_NAME }}
-        publish-profile: ${{ secrets.AZURE_WEBAPP_PUBLISH_PROFILE }}
-        configuration-file: azure-docker-compose.yml
+        name: deployment-files-${{ steps.set-env.outputs.env_name }}
+        path: |
+          docker-compose.deploy.yml
+        
+    # Nota: El despliegue real dependería del entorno específico (Kubernetes, Docker Swarm, etc.)
+    # Añadir los pasos específicos para tu plataforma de despliegue a continuación
+    
+    # Ejemplo para despliegue SSH en servidor remoto (deshabilitado por defecto)
+    - name: Deploy to server via SSH
+      if: false # Cambiar a true cuando esté configurado
+      uses: appleboy/ssh-action@master
+      with:
+        host: ${{ secrets.SSH_HOST }}
+        username: ${{ secrets.SSH_USERNAME }}
+        key: ${{ secrets.SSH_PRIVATE_KEY }}
+        port: ${{ secrets.SSH_PORT }}
+        script: |
+          mkdir -p ~/microservices-deploy
+          cd ~/microservices-deploy
+          echo "${{ secrets.DOCKER_PASSWORD }}" | docker login -u ${{ env.DOCKER_HUB_USERNAME }} --password-stdin
+          wget -O docker-compose.yml ${{ github.server_url }}/${{ github.repository }}/raw/${{ github.sha }}/docker-compose.deploy.yml
+          docker compose pull
+          docker compose up -d
