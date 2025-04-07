@@ -135,24 +135,25 @@ jobs:
           docker rm frontend-test backend-test || true
           docker network rm test-network || true
       
-      # Login a Container Registry (DockerHub por defecto)
-      - name: Login to Docker Hub
+      # Login a Container Registry (Azure Container Registry)
+      - name: Login to Azure Container Registry
         if: success() && github.event_name != 'pull_request'
-        uses: docker/login-action@v2
+        uses: azure/docker-login@v1
         with:
-          username: ${{ secrets.DOCKER_USERNAME }}
-          password: ${{ secrets.DOCKER_PASSWORD }}
+          login-server: paqueteturisiticoscontainer.azurecr.io
+          username: ${{ secrets.AZURE_REGISTRY_USERNAME }}
+          password: ${{ secrets.AZURE_REGISTRY_PASSWORD }}
       
       # Tag y push de las imágenes
       - name: Tag and push images
         if: success() && github.event_name != 'pull_request'
         run: |
           # Tag imágenes
-          docker tag santiprimerproyecto:frontend-test santidaw/santiprimerproyecto:frontend
-          docker tag santiprimerproyecto:backend-test santidaw/santiprimerproyecto:backend
+          docker tag santiprimerproyecto:frontend-test paqueteturisiticoscontainer.azurecr.io/santiprimerproyecto:frontend
+          docker tag santiprimerproyecto:backend-test paqueteturisiticoscontainer.azurecr.io/santiprimerproyecto:backend
           
           # Push imágenes
-          docker push santidaw/santiprimerproyecto:frontend
-          docker push santidaw/santiprimerproyecto:backend
+          docker push paqueteturisiticoscontainer.azurecr.io/santiprimerproyecto:frontend
+          docker push paqueteturisiticoscontainer.azurecr.io/santiprimerproyecto:backend
           
-          echo "✅ Imágenes subidas a Docker Hub" 
+          echo "✅ Imágenes subidas a Azure Container Registry" 

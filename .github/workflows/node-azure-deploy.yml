@@ -140,7 +140,7 @@ jobs:
         
     # Archivo de despliegue como artefacto
     - name: Upload deployment files
-      uses: actions/upload-artifact@v3
+      uses: actions/upload-artifact@v4
       with:
         name: deployment-files-${{ steps.set-env.outputs.env_name }}
         path: |
