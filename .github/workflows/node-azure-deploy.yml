@@ -51,11 +51,11 @@ jobs:
         if [[ "${{ github.event.inputs.environment }}" == "production" ]]; then
           echo "FRONTEND_URL=${{ env.PROD_FRONTEND_URL }}" >> $GITHUB_ENV
           echo "BACKEND_URL=${{ env.PROD_BACKEND_URL }}" >> $GITHUB_ENV
-          echo "::set-output name=env_name::production"
+          echo "env_name=production" >> $GITHUB_OUTPUT
         else
           echo "FRONTEND_URL=${{ env.STAGING_FRONTEND_URL }}" >> $GITHUB_ENV
           echo "BACKEND_URL=${{ env.STAGING_BACKEND_URL }}" >> $GITHUB_ENV
-          echo "::set-output name=env_name::staging"
+          echo "env_name=staging" >> $GITHUB_OUTPUT
         fi
         
     # Construir y subir imagen del frontend
@@ -67,7 +67,7 @@ jobs:
         push: true
         tags: ${{ env.DOCKER_HUB_USERNAME }}/${{ env.FRONTEND_IMAGE }}
         build-args: |
-          BACKEND_URL=${{ env.BACKEND_URL }}
+          BACKEND_URL=${{ github.event.inputs.environment == 'production' && env.PROD_BACKEND_URL || env.STAGING_BACKEND_URL }}
         
     # Construir y subir imagen del backend
     - name: Build and push backend image
@@ -78,7 +78,7 @@ jobs:
         push: true
         tags: ${{ env.DOCKER_HUB_USERNAME }}/${{ env.BACKEND_IMAGE }}
         build-args: |
-          CORS_ORIGIN=${{ env.FRONTEND_URL }}
+          BACKEND_URL=${{ github.event.inputs.environment == 'production' && env.PROD_BACKEND_URL || env.STAGING_BACKEND_URL }}
           
     # Crear archivo docker-compose para el despliegue
     - name: Preparar docker-compose para despliegue
