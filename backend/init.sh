@@ -1,25 +1,21 @@
 #!/bin/sh
 
-# Generar claves SSH si no existen
-ssh-keygen -A
+# Script de inicio para microservicio backend
+echo "Iniciando microservicio backend..."
 
-# Iniciar el servicio SSH
-/usr/sbin/sshd
+# Variables de entorno por defecto si no están definidas
+export NODE_ENV=${NODE_ENV:-production}
+export PORT=${PORT:-3000}
+export HOST=${HOST:-0.0.0.0}
+export LOG_LEVEL=${LOG_LEVEL:-info}
 
-# Esperar a que el servicio SSH esté listo (usando netcat-openbsd)
-while ! nc -z localhost 2222; do
-  sleep 1
-done
-
-# Iniciar la aplicación
+# Comprobar entorno
 if [ "$NODE_ENV" = "production" ]; then
-    # Para el backend
-    cd /app
-    npm install
-    PORT=3000 npm start
+    echo "Ejecutando en modo producción"
+    # Ejecutar directamente el servidor
+    node dist/server.js
 else
-    # Para desarrollo
-    cd /app
-    npm install
-    PORT=3000 npm run dev
+    echo "Ejecutando en modo desarrollo"
+    # Para desarrollo usar ts-node-dev
+    npm run dev
 fi 
