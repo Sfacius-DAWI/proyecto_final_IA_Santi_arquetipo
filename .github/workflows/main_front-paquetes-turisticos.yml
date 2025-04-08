@@ -25,12 +25,16 @@ jobs:
         registry: https://paqueteturisiticoscontainer.azurecr.io/
         username: ${{ secrets.AZURE_REGISTRY_USERNAME }}
         password: ${{ secrets.AZURE_REGISTRY_PASSWORD }}
+        
+    - name: Set lowercase username
+      id: lowercase
+      run: echo "registry_username=$(echo ${{ secrets.AZURE_REGISTRY_USERNAME }} | tr '[:upper:]' '[:lower:]')" >> $GITHUB_OUTPUT
 
     - name: Build and push container image to registry
       uses: docker/build-push-action@v3
       with:
         push: true
-        tags: paqueteturisiticoscontainer.azurecr.io/${{ secrets.AZURE_REGISTRY_USERNAME }}/santiprimerproyecto:${{ github.sha }}
+        tags: paqueteturisiticoscontainer.azurecr.io/${{ steps.lowercase.outputs.registry_username }}/santiprimerproyecto:${{ github.sha }}
         file: ./Dockerfile
 
   deploy:
@@ -38,6 +42,10 @@ jobs:
     needs: build
     
     steps:
+    - name: Set lowercase username
+      id: lowercase
+      run: echo "registry_username=$(echo ${{ secrets.AZURE_REGISTRY_USERNAME }} | tr '[:upper:]' '[:lower:]')" >> $GITHUB_OUTPUT
+      
     - name: Deploy to Azure Web App
       id: deploy-to-webapp
       uses: azure/webapps-deploy@v2
@@ -45,4 +53,4 @@ jobs:
         app-name: 'front-paquetes-turisticos'
         slot-name: 'production'
         publish-profile: ${{ secrets.AzureAppService_PublishProfile_6d8c2ab063134ef79002b193fc922695 }}
-        images: 'paqueteturisiticoscontainer.azurecr.io/${{ secrets.AZURE_REGISTRY_USERNAME }}/santiprimerproyecto:${{ github.sha }}'
+        images: 'paqueteturisiticoscontainer.azurecr.io/${{ steps.lowercase.outputs.registry_username }}/santiprimerproyecto:${{ github.sha }}'
