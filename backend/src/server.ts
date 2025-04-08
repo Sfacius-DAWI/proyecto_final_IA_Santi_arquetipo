@@ -9,7 +9,7 @@ const envFile = process.env.NODE_ENV === 'production' ? '.env' : '.env.local';
 dotenv.config({ path: envFile });
 
 // Configuración de variables de entorno
-const PORT = 3003;
+const PORT = parseInt(process.env.PORT || '3000', 10);
 const HOST = process.env.HOST || '0.0.0.0';
 const LOG_LEVEL = process.env.LOG_LEVEL || 'info';
 const API_VERSION = process.env.API_VERSION || 'v1';
@@ -62,10 +62,10 @@ async function start() {
 
     // Iniciar servidor
     console.log('Intentando iniciar el servidor...');
-    await server.listen({ port: PORT, host: '127.0.0.1' });
+    await server.listen({ port: PORT, host: HOST });
     console.log(`Servidor iniciado en puerto ${PORT}`);
     
-    server.log.info(`Servidor ejecutándose en http://127.0.0.1:${PORT}`);
+    server.log.info(`Servidor ejecutándose en http://${HOST}:${PORT}`);
   } catch (err) {
     console.error('Error al iniciar el servidor:', err);
     server.log.error(err);

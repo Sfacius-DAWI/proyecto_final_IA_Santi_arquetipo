@@ -73,10 +73,10 @@ jobs:
             exit 1
           fi
           
-          # Verifica que la imagen exponga el puerto 3000
+          # Verifica que la imagen exponga el puerto 3003
           PORTS=$(docker inspect --format='{{json .Config.ExposedPorts}}' santiprimerproyecto:backend-test)
-          if [[ ! "$PORTS" == *"3000"* ]]; then
-            echo "ERROR: La imagen backend no expone el puerto 3000"
+          if [[ ! "$PORTS" == *"3003"* ]]; then
+            echo "ERROR: La imagen backend no expone el puerto 3003"
             echo "Puertos expuestos: $PORTS"
             exit 1
           fi
@@ -92,7 +92,7 @@ jobs:
           # Inicia primero el backend para que el frontend pueda conectarse
           docker run -d --name backend-test --network test-network \
             -e NODE_ENV=production \
-            -e PORT=3000 \
+            -e PORT=3003 \
             -e LOG_LEVEL=info \
             -e API_VERSION=v1 \
             -e CORS_ORIGIN=http://localhost:3000 \
@@ -102,7 +102,7 @@ jobs:
           docker run -d --name frontend-test --network test-network -p 3000:3000 \
             -e NODE_ENV=production \
             -e PORT=3000 \
-            -e BACKEND_URL=http://backend-test:3000/ \
+            -e BACKEND_URL=http://backend-test:3003/ \
             -e API_TIMEOUT=30000 \
             santiprimerproyecto:frontend-test
           
