@@ -31,6 +31,15 @@ ENV API_VERSION=v1
 ENV LOG_LEVEL=info
 ENV REQUEST_TIMEOUT=30000
 
+# Variables de entorno para la base de datos (valores por defecto)
+ENV POSTGRES_HOST=host.docker.internal
+ENV POSTGRES_PORT=5432
+ENV POSTGRES_DB=miappdb
+ENV POSTGRES_USER=apiuser
+ENV POSTGRES_PASSWORD=apipass
+ENV POSTGRES_SSL=false
+ENV DB_CONNECTION_REQUIRED=false
+
 # Healthcheck para orquestación de microservicios
 HEALTHCHECK --interval=30s --timeout=5s --retries=3 \
   CMD wget --no-verbose --tries=1 --spider http://localhost:3003/health || exit 1

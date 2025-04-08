@@ -1,9 +1,22 @@
 import { FastifyInstance } from 'fastify';
-import { query } from '../config/database';
+import { query, pgPool } from '../config/database';
 
 export default async function (fastify: FastifyInstance): Promise<void> {
+  // Función auxiliar para verificar la disponibilidad de la BD
+  const checkDbConnection = (reply: any) => {
+    if (!pgPool) {
+      reply.status(503);
+      return { message: 'Servicio de base de datos no disponible' };
+    }
+    return null;
+  };
+
   // Ruta para probar la conexión a PostgreSQL
   fastify.get('/db-test', async (request, reply) => {
+    // Verificar si hay conexión a la BD
+    const dbError = checkDbConnection(reply);
+    if (dbError) return dbError;
+
     try {
       // Consulta de prueba para verificar la conexión
       const result = await query('SELECT NOW() as time');
@@ -23,6 +36,10 @@ export default async function (fastify: FastifyInstance): Promise<void> {
 
   // Ruta para insertar un ejemplo
   fastify.post('/ejemplos', async (request, reply) => {
+    // Verificar si hay conexión a la BD
+    const dbError = checkDbConnection(reply);
+    if (dbError) return dbError;
+
     const { nombre, descripcion } = request.body as { nombre: string; descripcion?: string };
     
     if (!nombre) {
@@ -53,6 +70,10 @@ export default async function (fastify: FastifyInstance): Promise<void> {
 
   // Ruta para obtener todos los ejemplos
   fastify.get('/ejemplos', async (request, reply) => {
+    // Verificar si hay conexión a la BD
+    const dbError = checkDbConnection(reply);
+    if (dbError) return dbError;
+
     try {
       const result = await query('SELECT * FROM ejemplos ORDER BY id DESC');
       return { 

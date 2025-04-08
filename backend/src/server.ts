@@ -46,10 +46,18 @@ async function start() {
     console.log(`Puerto configurado: ${PORT}`);
     
     // Inicializar conexión a la base de datos
-    const dbConnected = await initDatabase();
-    if (!dbConnected) {
-      console.error('No se pudo conectar a la base de datos');
-      process.exit(1);
+    try {
+      const dbConnected = await initDatabase();
+      if (!dbConnected) {
+        console.warn('No se pudo conectar a la base de datos. Algunas funcionalidades podrían no estar disponibles.');
+      }
+    } catch (dbError) {
+      console.error('Error al conectar con la base de datos:', dbError);
+      if (process.env.NODE_ENV !== 'production') {
+        process.exit(1);
+      } else {
+        console.warn('Continuando sin conexión a base de datos en modo producción.');
+      }
     }
     
     // Registrar plugins con CORS configurado para permitir frontend
