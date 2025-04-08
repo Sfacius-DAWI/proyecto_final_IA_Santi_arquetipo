@@ -33,9 +33,10 @@ jobs:
     - name: Build and push container image to registry
       uses: docker/build-push-action@v3
       with:
+        context: ./frontend
+        file: ./frontend/Dockerfile
         push: true
         tags: paqueteturisiticoscontainer.azurecr.io/${{ steps.lowercase.outputs.registry_username }}/santiprimerproyecto:${{ github.sha }}
-        file: ./Dockerfile
 
   deploy:
     runs-on: ubuntu-latest
