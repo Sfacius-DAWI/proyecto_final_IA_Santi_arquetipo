@@ -23,23 +23,20 @@ jobs:
       uses: docker/login-action@v2
       with:
         registry: https://paqueteturisiticoscontainer.azurecr.io/
-        username: ${{ secrets.AzureAppService_ContainerUsername_9d05380aba194160937b63c203724062 }}
-        password: ${{ secrets.AzureAppService_ContainerPassword_269130dd5b284032bafe5a17193f02ab }}
+        username: ${{ secrets.AZURE_REGISTRY_USERNAME }}
+        password: ${{ secrets.AZURE_REGISTRY_PASSWORD }}
 
     - name: Build and push container image to registry
       uses: docker/build-push-action@v3
       with:
         push: true
-        tags: paqueteturisiticoscontainer.azurecr.io/${{ secrets.AzureAppService_ContainerUsername_9d05380aba194160937b63c203724062 }}/santiprimerproyecto:${{ github.sha }}
+        tags: paqueteturisiticoscontainer.azurecr.io/${{ secrets.AZURE_REGISTRY_USERNAME }}/santiprimerproyecto:${{ github.sha }}
         file: ./Dockerfile
 
   deploy:
     runs-on: ubuntu-latest
     needs: build
-    environment:
-      name: 'production'
-      url: ${{ steps.deploy-to-webapp.outputs.webapp-url }}
-
+    
     steps:
     - name: Deploy to Azure Web App
       id: deploy-to-webapp
@@ -48,4 +45,4 @@ jobs:
         app-name: 'front-paquetes-turisticos'
         slot-name: 'production'
         publish-profile: ${{ secrets.AzureAppService_PublishProfile_6d8c2ab063134ef79002b193fc922695 }}
-        images: 'paqueteturisiticoscontainer.azurecr.io/${{ secrets.AzureAppService_ContainerUsername_9d05380aba194160937b63c203724062 }}/santiprimerproyecto:${{ github.sha }}'
+        images: 'paqueteturisiticoscontainer.azurecr.io/${{ secrets.AZURE_REGISTRY_USERNAME }}/santiprimerproyecto:${{ github.sha }}'
