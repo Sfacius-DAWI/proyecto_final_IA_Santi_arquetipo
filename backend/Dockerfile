@@ -10,6 +10,7 @@ RUN npm install --legacy-peer-deps
 # Copiar el resto del código y construir
 COPY . .
 RUN npm run build
+RUN ls -la dist
 
 # Production stage
 FROM node:18-alpine
@@ -20,8 +21,11 @@ WORKDIR /app
 COPY --from=builder /app/dist ./dist
 COPY --from=builder /app/package*.json ./
 
-# Instalar solo dependencias de producción
-RUN npm install --production --legacy-peer-deps
+# Verificar si los archivos están donde deberían
+RUN ls -la && ls -la dist
+
+# Instalar solo dependencias de producción (sin devDependencies)
+RUN npm install --omit=dev --no-package-lock
 
 # Variables de entorno para microservicios
 ENV NODE_ENV=production
@@ -47,4 +51,4 @@ HEALTHCHECK --interval=30s --timeout=5s --retries=3 \
 EXPOSE 3003
 
 # Comando para iniciar el microservicio
-CMD ["node", "dist/server.js"]
+CMD ["node", "dist/src/server.js"]
