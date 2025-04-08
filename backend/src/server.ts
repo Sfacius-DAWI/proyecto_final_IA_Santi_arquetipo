@@ -1,9 +1,15 @@
 import Fastify, { FastifyInstance } from 'fastify';
 import cors from '@fastify/cors';
 import { routes } from './routes/index';
+import { initDatabase } from './config/database';
+import dotenv from 'dotenv';
+
+// Cargar variables de entorno
+const envFile = process.env.NODE_ENV === 'production' ? '.env' : '.env.local';
+dotenv.config({ path: envFile });
 
 // Configuración de variables de entorno
-const PORT = parseInt(process.env.PORT || '3000', 10);
+const PORT = 3003;
 const HOST = process.env.HOST || '0.0.0.0';
 const LOG_LEVEL = process.env.LOG_LEVEL || 'info';
 const API_VERSION = process.env.API_VERSION || 'v1';
@@ -12,19 +18,7 @@ const CORS_ORIGIN = process.env.CORS_ORIGIN || 'http://localhost:3000';
 
 // Crear servidor Fastify
 const server: FastifyInstance = Fastify({
-  logger: {
-    level: LOG_LEVEL,
-    serializers: {
-      res(reply) {
-        return {
-          statusCode: reply.statusCode,
-          responseTime: reply.elapsedTime
-        };
-      }
-    }
-  },
-  trustProxy: true,
-  connectionTimeout: REQUEST_TIMEOUT
+  logger: true
 });
 
 // Manejar señales de terminación para graceful shutdown
@@ -48,35 +42,32 @@ process.on('SIGINT', gracefulShutdown('SIGINT'));
 
 async function start() {
   try {
+    console.log('Iniciando servidor...');
+    console.log(`Puerto configurado: ${PORT}`);
+    
+    // Inicializar conexión a la base de datos
+    const dbConnected = await initDatabase();
+    if (!dbConnected) {
+      console.error('No se pudo conectar a la base de datos');
+      process.exit(1);
+    }
+    
     // Registrar plugins con CORS configurado para permitir frontend
     await server.register(cors, { 
-      origin: CORS_ORIGIN,
-      credentials: true,
-      methods: ['GET', 'PUT', 'POST', 'DELETE', 'OPTIONS'],
-      allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With']
-    });
-
-    server.log.info(`CORS configurado para origen: ${CORS_ORIGIN}`);
-
-    // Configurar encabezados de seguridad globales
-    server.addHook('onSend', (request, reply, payload, done) => {
-      reply.header('X-Content-Type-Options', 'nosniff');
-      reply.header('X-Frame-Options', 'DENY');
-      reply.header('X-XSS-Protection', '1; mode=block');
-      done(null, payload);
+      origin: CORS_ORIGIN
     });
 
     // Registrar rutas
-    routes(server);
+    await routes(server);
 
     // Iniciar servidor
-    await server.listen({ port: PORT, host: HOST });
+    console.log('Intentando iniciar el servidor...');
+    await server.listen({ port: PORT, host: '127.0.0.1' });
+    console.log(`Servidor iniciado en puerto ${PORT}`);
     
-    const address = server.server.address();
-    const port = typeof address === 'string' ? address : address?.port;
-    
-    server.log.info(`Microservicio backend (API ${API_VERSION}) ejecutándose en http://${HOST}:${port}`);
+    server.log.info(`Servidor ejecutándose en http://127.0.0.1:${PORT}`);
   } catch (err) {
+    console.error('Error al iniciar el servidor:', err);
     server.log.error(err);
     process.exit(1);
   }
