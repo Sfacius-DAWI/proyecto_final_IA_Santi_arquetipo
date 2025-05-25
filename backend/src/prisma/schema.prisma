@@ -1,0 +1,164 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
+// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
+
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+  binaryTargets = ["native", "linux-musl-openssl-3.0.x"]
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// Modelo de Usuario
+model User {
+  id          String       @id // Usaremos el UID de Firebase
+  nombre      String
+  apellido    String
+  role        Role         @default(USUARIO)
+  createdAt   DateTime     @default(now())
+  updatedAt   DateTime     @updatedAt
+  reservas    Reserva[]
+  testimonios Testimonio[]
+  compras     Compra[]
+  guia        Guia?
+}
+
+enum Role {
+  ADMIN
+  USUARIO
+  GUIA
+}
+
+// Modelo de Tour
+model Tour {
+  id           String      @id @default(uuid())
+  titulo       String
+  descripcion  String      @db.Text
+  precio       Decimal     @db.Decimal(10, 2)
+  imagen       String
+  duracion     Int // duración en minutos
+  disponible   Boolean     @default(true)
+  etiqueta     String? // Para "Limited Edition", "New Arrival", etc.
+  tipoEtiqueta String? // "limited", "new", "popular"
+  createdAt    DateTime    @default(now())
+  updatedAt    DateTime    @updatedAt
+  categorias   Categoria[]
+  reservas     Reserva[]
+  guias        GuiaTour[]
+  compras      Compra[]
+}
+
+// Modelo de Guía (extiende User)
+model Guia {
+  id             String     @id @default(uuid())
+  userId         String     @unique
+  user           User       @relation(fields: [userId], references: [id])
+  especialidades String[]
+  descripcion    String     @db.Text
+  imagen         String
+  disponible     Boolean    @default(true)
+  tours          GuiaTour[]
+  calificacion   Float?
+  createdAt      DateTime   @default(now())
+  updatedAt      DateTime   @updatedAt
+}
+
+// Relación Guía-Tour
+model GuiaTour {
+  id        String   @id @default(uuid())
+  guiaId    String
+  tourId    String
+  guia      Guia     @relation(fields: [guiaId], references: [id])
+  tour      Tour     @relation(fields: [tourId], references: [id])
+  createdAt DateTime @default(now())
+
+  @@unique([guiaId, tourId])
+}
+
+// Modelo de Categoría
+model Categoria {
+  id          String   @id @default(uuid())
+  nombre      String   @unique
+  descripcion String?
+  tours       Tour[]
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+}
+
+// Modelo de Reserva
+model Reserva {
+  id          String        @id @default(uuid())
+  userId      String
+  tourId      String
+  fecha       DateTime
+  estado      EstadoReserva @default(PENDIENTE)
+  cantidad    Int           @default(1)
+  precioTotal Decimal       @db.Decimal(10, 2)
+  createdAt   DateTime      @default(now())
+  updatedAt   DateTime      @updatedAt
+  user        User          @relation(fields: [userId], references: [id])
+  tour        Tour          @relation(fields: [tourId], references: [id])
+}
+
+enum EstadoReserva {
+  PENDIENTE
+  CONFIRMADA
+  CANCELADA
+  COMPLETADA
+}
+
+// Modelo de Compra
+model Compra {
+  id          String     @id @default(uuid())
+  userId      String
+  tourId      String
+  cantidad    Int
+  precioTotal Decimal    @db.Decimal(10, 2)
+  metodoPago  String
+  estado      EstadoPago @default(PENDIENTE)
+  createdAt   DateTime   @default(now())
+  updatedAt   DateTime   @updatedAt
+  user        User       @relation(fields: [userId], references: [id])
+  tour        Tour       @relation(fields: [tourId], references: [id])
+}
+
+enum EstadoPago {
+  PENDIENTE
+  COMPLETADO
+  FALLIDO
+  REEMBOLSADO
+}
+
+// Modelo de Testimonio
+model Testimonio {
+  id           String   @id @default(uuid())
+  userId       String
+  contenido    String   @db.Text
+  calificacion Int
+  aprobado     Boolean  @default(false)
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+  user         User     @relation(fields: [userId], references: [id])
+}
+
+// Modelo de Código Promocional
+model CodigoPromocional {
+  id           String   @id @default(uuid())
+  codigo       String   @unique
+  descuento    Decimal  @db.Decimal(5, 2)
+  fechaInicio  DateTime
+  fechaFin     DateTime
+  usoMaximo    Int?
+  usosActuales Int      @default(0)
+  activo       Boolean  @default(true)
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+}

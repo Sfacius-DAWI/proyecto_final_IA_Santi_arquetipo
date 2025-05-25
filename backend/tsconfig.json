@@ -1,14 +1,23 @@
 {
   "compilerOptions": {
-    "target": "ES2020",
+    "baseUrl": "./",
     "module": "NodeNext",
     "moduleResolution": "NodeNext",
-    "esModuleInterop": true,
+    "outDir": "./dist",
+    "rootDir": "./src",
+    "target": "ES2020",
+    "typeRoots": [
+      "./node_modules/@types",
+      "./types"
+    ],
     "strict": true,
-    "outDir": "dist",
-    "sourceMap": true,
-    "resolveJsonModule": true
+    "esModuleInterop": true,
+    "skipLibCheck": true,
+    "forceConsistentCasingInFileNames": true,
+    "resolveJsonModule": true,
+    "allowJs": true,
+    "removeComments": false
   },
-  "include": ["src/**/*"],
-  "exclude": ["node_modules"]
-} 
+  "include": ["src/**/*", "prisma/**/*"],
+  "exclude": ["node_modules", "dist"]
+}

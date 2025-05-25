@@ -1,0 +1,84 @@
+
+@import url('https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;500;600;700&family=Poppins:wght@300;400;500;600&display=swap');
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    --background: 43 38% 96%;
+    --foreground: 222.2 84% 4.9%;
+
+    --card: 43 38% 96%;
+    --card-foreground: 222.2 84% 4.9%;
+
+    --popover: 0 0% 100%;
+    --popover-foreground: 222.2 84% 4.9%;
+
+    --primary: 195 77% 19%;
+    --primary-foreground: 210 40% 98%;
+
+    --secondary: 30 33% 93%;
+    --secondary-foreground: 222.2 47.4% 11.2%;
+
+    --muted: 210 40% 96.1%;
+    --muted-foreground: 215.4 16.3% 46.9%;
+
+    --accent: 15 43% 58%;
+    --accent-foreground: 210 40% 98%;
+
+    --destructive: 0 84.2% 60.2%;
+    --destructive-foreground: 210 40% 98%;
+
+    --border: 214.3 31.8% 91.4%;
+    --input: 214.3 31.8% 91.4%;
+    --ring: 222.2 84% 4.9%;
+
+    --radius: 0.5rem;
+  }
+
+  * {
+    @apply border-border;
+  }
+
+  body {
+    @apply bg-background text-foreground font-poppins;
+  }
+  
+  h1, h2, h3, h4, h5, h6 {
+    @apply font-playfair font-medium text-primary;
+  }
+  
+  .heading-xl {
+    @apply text-4xl md:text-5xl font-semibold;
+  }
+  
+  .heading-lg {
+    @apply text-3xl md:text-4xl font-semibold;
+  }
+  
+  .heading-md {
+    @apply text-2xl md:text-3xl font-medium;
+  }
+  
+  .section-padding {
+    @apply py-12 px-4 md:py-16 md:px-8;
+  }
+  
+  .container-custom {
+    @apply max-w-7xl mx-auto px-4;
+  }
+  
+  .btn-primary {
+    @apply bg-primary hover:bg-primary/90 text-white py-2 px-6 rounded font-medium transition-colors;
+  }
+  
+  .btn-secondary {
+    @apply bg-accent hover:bg-accent/90 text-white py-2 px-6 rounded font-medium transition-colors;
+  }
+  
+  .btn-outline {
+    @apply border border-primary text-primary hover:bg-primary/10 py-2 px-6 rounded font-medium transition-colors;
+  }
+}

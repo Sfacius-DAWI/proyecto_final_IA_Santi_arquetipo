@@ -1,10 +1,11 @@
-import { Pool } from 'pg';
+import pkg from 'pg';
+const { Pool } = pkg;
 
 // Variable para determinar si la conexión a la BD es requerida
 const isDbConnectionRequired = process.env.DB_CONNECTION_REQUIRED === 'true';
 
 // Configuración de la base de datos PostgreSQL
-export const pgConfig = {
+const pgConfig = {
   host: process.env.POSTGRES_HOST || 'localhost',
   port: parseInt(process.env.POSTGRES_PORT || '5432', 10),
   database: process.env.POSTGRES_DB || 'miappdb',
@@ -16,7 +17,7 @@ export const pgConfig = {
 };
 
 // Crear pool de conexiones
-export let pgPool: Pool | null = null;
+let pgPool: InstanceType<typeof Pool> | null = null;
 
 try {
   pgPool = new Pool(pgConfig);
@@ -31,7 +32,7 @@ try {
 }
 
 // Función para realizar consultas
-export const query = async (text: string, params?: any[]) => {
+const query = async (text: string, params?: any[]) => {
   if (!pgPool) {
     console.warn('No hay conexión a la base de datos disponible');
     return { rows: [], rowCount: 0 };
@@ -50,7 +51,7 @@ export const query = async (text: string, params?: any[]) => {
 };
 
 // Inicialización de la conexión
-export const initDatabase = async () => {
+const initDatabase = async () => {
   if (!pgPool) {
     console.warn('No hay pool de conexión a la base de datos disponible');
     return !isDbConnectionRequired; // Retorna true si la conexión no es requerida
@@ -78,4 +79,6 @@ export const initDatabase = async () => {
     // Si la conexión es requerida, retorna false; de lo contrario, true
     return !isDbConnectionRequired;
   }
-}; 
+};
+
+export { pgConfig, pgPool, query, initDatabase }; 

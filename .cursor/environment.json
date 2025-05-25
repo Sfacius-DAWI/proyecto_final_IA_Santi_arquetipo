@@ -1,0 +1,15 @@
+{
+  "build": {
+    "dockerfile": "Dockerfile.dev",
+    "context": "."
+  },
+  "terminals": [
+    {
+      "name": "terminal",
+      "command": "bash",
+      "description": "Terminal principal para desarrollo"
+    }
+  ],
+  "install": "npm install",
+  "start": "npm run .\\start.dev.ps1"
+}

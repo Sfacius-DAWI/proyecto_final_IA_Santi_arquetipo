@@ -1,5 +1,5 @@
 {
-  "name": "mi_arquetipo_santi_propio",
+  "name": "mi-arquetipo-santi",
   "version": "1.0.0",
   "main": "index.js",
   "scripts": {
@@ -13,16 +13,25 @@
     "docker:build": "docker-compose build",
     "docker:up": "docker-compose up -d",
     "docker:down": "docker-compose down",
-    "docker:snapshot": "docker-compose build && docker-compose up -d"
+    "docker:snapshot": "docker-compose build && docker-compose up -d",
+    "start:local": "powershell -ExecutionPolicy Bypass -File .\\start.dev.ps1",
+    "start:local:unix": "bash ./start.dev.sh"
   },
   "keywords": [],
   "author": "",
   "license": "ISC",
-  "description": "",
+  "description": "Arquetipo de desarrollo para aplicación web",
   "devDependencies": {
+    "@types/node": "^22.15.14",
     "concurrently": "^8.2.2"
   },
   "dependencies": {
-    "mi_arquetipo_santi_propio": "file:"
+    "@firebase/analytics": "^0.10.13",
+    "@firebase/app": "^0.12.1",
+    "@firebase/auth": "^1.10.2",
+    "@sinclair/typebox": "^0.34.33",
+    "firebase": "^11.7.1",
+    "mi_arquetipo_santi_propio": "file:",
+    "mi-arquetipo-santi": "file:"
   }
 }

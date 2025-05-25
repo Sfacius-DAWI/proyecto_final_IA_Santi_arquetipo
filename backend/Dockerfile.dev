@@ -1,0 +1,31 @@
+FROM node:18-alpine
+
+WORKDIR /usr/src/app
+
+# Instalar dependencias de desarrollo
+COPY package*.json ./
+RUN npm install
+RUN npm install @sinclair/typebox
+RUN npm install -g tsx
+RUN npm install -g prisma
+
+# Copiar el código fuente
+COPY . .
+
+# Asegurar permisos y generar el cliente de Prisma
+RUN mkdir -p src/prisma/.prisma/client
+RUN chmod -R 777 src/prisma
+RUN cd src/prisma && npx prisma generate
+
+# Variables de entorno
+ENV NODE_ENV=development
+ENV PORT=3003
+ENV HOST=0.0.0.0
+
+EXPOSE 3003
+
+# Script de inicio que ejecuta las migraciones y luego inicia el servidor
+COPY start.sh /usr/src/app/
+RUN chmod +x /usr/src/app/start.sh
+
+CMD ["/usr/src/app/start.sh"] 

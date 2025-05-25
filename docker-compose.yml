@@ -2,62 +2,58 @@ version: '3.8'
 
 services:
   frontend:
-    build:
+    build: 
       context: ./frontend
       dockerfile: Dockerfile
     ports:
-      - "3000:3000"
+      - "8080:8080"
     environment:
       - NODE_ENV=development
-      - BACKEND_URL=http://backend:3003
+      - PORT=8080
+      - VITE_BACKEND_URL=http://backend:3003
+    volumes:
+      - ./frontend:/app
+      - /app/node_modules
     depends_on:
-      backend:
-        condition: service_healthy
-    healthcheck:
-      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://0.0.0.0:3000/health"]
-      interval: 30s
-      timeout: 5s
-      retries: 3
+      - backend
 
   backend:
-    build:
-      context: ./backend
-      dockerfile: Dockerfile
+    build: ./backend
     ports:
       - "3003:3003"
     environment:
+      - DATABASE_URL=postgresql://apiuser:apipass@postgres:5432/miappdb?schema=public
       - NODE_ENV=development
+      - PORT=3003
       - POSTGRES_HOST=postgres
       - POSTGRES_PORT=5432
+      - POSTGRES_USER=apiuser
+      - POSTGRES_PASSWORD=apipass
       - POSTGRES_DB=miappdb
-      - POSTGRES_USER=postgres
-      - POSTGRES_PASSWORD=postgres
     depends_on:
       postgres:
         condition: service_healthy
-    healthcheck:
-      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://0.0.0.0:3003/health"]
-      interval: 30s
-      timeout: 5s
-      retries: 3
+    volumes:
+      - ./backend:/usr/src/app
+      - /usr/src/app/node_modules
+    command: ["./start.sh"]
 
   postgres:
-    image: postgres:14-alpine
+    image: postgres:16
+    environment:
+      POSTGRES_USER: apiuser
+      POSTGRES_PASSWORD: apipass
+      POSTGRES_DB: miappdb
     ports:
       - "5432:5432"
-    environment:
-      - POSTGRES_DB=miappdb
-      - POSTGRES_USER=postgres
-      - POSTGRES_PASSWORD=postgres
     volumes:
       - postgres_data:/var/lib/postgresql/data
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      test: ["CMD-SHELL", "pg_isready -U apiuser -d miappdb"]
       interval: 5s
       timeout: 5s
       retries: 5
-      start_period: 10s
 
 volumes:
   postgres_data:
-    driver: local 
+    driver: local
