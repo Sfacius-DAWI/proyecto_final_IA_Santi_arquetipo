@@ -84,6 +84,7 @@ export const purchaseService = {
     tourId: string;
     cantidad: number;
     metodoPago: string;
+    precioTotal: number;
   }): Promise<Purchase> {
     try {
       const auth = getAuth();

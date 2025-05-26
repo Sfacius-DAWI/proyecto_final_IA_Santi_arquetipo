@@ -135,6 +135,7 @@ enum EstadoPago {
   COMPLETADO
   FALLIDO
   REEMBOLSADO
+  CANCELADO
 }
 
 // Modelo de Testimonio

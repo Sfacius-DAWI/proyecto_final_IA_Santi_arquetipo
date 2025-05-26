@@ -18,7 +18,7 @@ export const purchaseResponseSchema = {
     cantidad: { type: 'integer' },
     precioTotal: { type: 'number' },
     metodoPago: { type: 'string' },
-    estado: { type: 'string', enum: ['PENDIENTE', 'COMPLETADO', 'FALLIDO', 'REEMBOLSADO'] },
+    estado: { type: 'string', enum: ['PENDIENTE', 'COMPLETADO', 'FALLIDO', 'REEMBOLSADO', 'CANCELADO'] },
     createdAt: { type: 'string', format: 'date-time' },
     updatedAt: { type: 'string', format: 'date-time' },
     tour: {

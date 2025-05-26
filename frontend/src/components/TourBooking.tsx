@@ -15,6 +15,7 @@ import { Calendar as CalendarIcon } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { TourType, ReservationType } from "@/types/tour";
 import { tourService } from "@/services/tourService";
+import { reservationService, ReservationCreateData } from "@/services/reservationService";
 import { useAuth } from "@/contexts/AuthContext";
 
 interface TourBookingProps {
@@ -91,10 +92,13 @@ const TourBooking: React.FC<TourBookingProps> = ({ tour }) => {
     try {
       setLoading(true);
       
-      const reservationData: Omit<ReservationType, 'id' | 'status'> = {
+      // Obtener el nombre del guía seleccionado
+      const selectedGuide = withGuide && selectedGuideId 
+        ? tour.availableGuides?.find(guide => guide.id === selectedGuideId)
+        : undefined;
+      
+      const reservationData: ReservationCreateData = {
         tourId: tour.id,
-        userId: currentUser?.uid,
-        reservationDate: new Date().toISOString(),
         tourDate: format(selectedDate, 'yyyy-MM-dd'),
         numberOfPeople,
         withGuide,
@@ -108,12 +112,18 @@ const TourBooking: React.FC<TourBookingProps> = ({ tour }) => {
         },
       };
       
-      const reservation = await tourService.reserveTour(reservationData);
+      const reservation = await reservationService.createReservation(
+        reservationData,
+        tour.title,
+        tour.image,
+        selectedGuide?.name
+      );
       
-      toast.success("¡Reserva creada exitosamente!");
+      toast.success("¡Reserva agregada al carrito!");
       navigate("/cart");
     } catch (error) {
       toast.error("Error al crear la reserva");
+      console.error(error);
     } finally {
       setLoading(false);
     }

@@ -1,7 +1,10 @@
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { toast } from "sonner";
+import { reservationService, CartReservation } from "../services/reservationService";
+import { purchaseService } from "../services/purchaseService";
+import { useAuth } from "../contexts/AuthContext";
 
 interface FormData {
   email: string;
@@ -24,9 +27,50 @@ const initialFormData: FormData = {
 };
 
 const Checkout = () => {
+  const { currentUser } = useAuth();
   const [formData, setFormData] = useState(initialFormData);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [reservations, setReservations] = useState<CartReservation[]>([]);
+  const [loading, setLoading] = useState(true);
   const navigate = useNavigate();
+
+  useEffect(() => {
+    if (!currentUser) {
+      navigate('/login');
+      return;
+    }
+    
+    loadReservations();
+  }, [currentUser, navigate]);
+
+  const loadReservations = () => {
+    try {
+      const cartReservations = reservationService.getCartReservations();
+      if (cartReservations.length === 0) {
+        toast.error("No hay reservas en el carrito");
+        navigate('/cart');
+        return;
+      }
+      setReservations(cartReservations);
+    } catch (error) {
+      console.error('Error al cargar reservas:', error);
+      toast.error("Error al cargar las reservas");
+      navigate('/cart');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const calculateSubtotal = () => {
+    return reservations.reduce((total, reservation) => total + reservation.totalPrice, 0);
+  };
+
+  const formatCurrency = (amount: number) => {
+    return new Intl.NumberFormat('es-ES', {
+      style: 'currency',
+      currency: 'USD'
+    }).format(amount);
+  };
   
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
@@ -38,18 +82,48 @@ const Checkout = () => {
     setFormData({ ...formData, [name]: value });
   };
   
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsSubmitting(true);
     
-    // Simulate API call
-    setTimeout(() => {
-      toast.success("Order placed successfully!");
+    try {
+      // Crear compras para cada reserva
+      const purchasePromises = reservations.map(async (reservation) => {
+        const purchaseData = {
+          tourId: reservation.tourId,
+          cantidad: reservation.numberOfPeople,
+          metodoPago: formData.paymentMethod === 'credit-card' ? 'TARJETA' : 'PAYPAL',
+          precioTotal: reservation.totalPrice
+        };
+        
+        return await purchaseService.createPurchase(purchaseData);
+      });
+
+      await Promise.all(purchasePromises);
+      
+      // Limpiar el carrito después de la compra exitosa
+      reservationService.clearCart();
+      
+      toast.success("¡Compra realizada exitosamente!");
+      navigate("/purchases");
+    } catch (error) {
+      console.error('Error al procesar la compra:', error);
+      toast.error("Error al procesar la compra. Por favor, intenta de nuevo.");
+    } finally {
       setIsSubmitting(false);
-      navigate("/");
-    }, 1500);
+    }
   };
   
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+        <div className="text-center">
+          <p className="text-gray-600">Cargando información de pago...</p>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="min-h-screen bg-gray-50">
       <div className="container-custom section-padding">
@@ -57,48 +131,61 @@ const Checkout = () => {
           <div className="flex flex-col md:flex-row gap-8">
             {/* Items Overview */}
             <div className="md:w-1/3">
-              <h2 className="heading-md mb-4">Items overview</h2>
+              <h2 className="heading-md mb-4">Resumen de Reservas</h2>
               <p className="text-gray-600 mb-6">
-                This is your order summary where you can edit and delete your order and select your preferred delivery type.
+                Revisa tus reservas antes de proceder con el pago.
               </p>
               
-              <div className="bg-white rounded-lg overflow-hidden shadow-sm mb-6">
-                <div className="flex border-b p-4">
-                  <div className="w-1/3">
-                    <img 
-                      src="/lovable-uploads/7225d271-cdc0-4be2-bab9-f4c0c412f4b1.png" 
-                      alt="Coastal Adventure" 
-                      className="w-full h-20 object-cover rounded"
-                    />
+              <div className="space-y-4 mb-6">
+                {reservations.map((reservation) => (
+                  <div key={reservation.id} className="bg-white rounded-lg overflow-hidden shadow-sm">
+                    <div className="flex p-4">
+                      <div className="w-1/3">
+                        <img 
+                          src={reservation.tourImage} 
+                          alt={reservation.tourTitle} 
+                          className="w-full h-20 object-cover rounded"
+                        />
+                      </div>
+                      <div className="w-2/3 pl-4">
+                        <h3 className="font-medium text-sm">{reservation.tourTitle}</h3>
+                        <p className="text-xs text-gray-600">
+                          {reservation.withGuide 
+                            ? `Con guía: ${reservation.guideName || 'Por asignar'}`
+                            : 'Sin guía'
+                          }
+                        </p>
+                        <p className="text-xs text-gray-600">
+                          Personas: {reservation.numberOfPeople}
+                        </p>
+                        <p className="text-accent font-medium mt-2">
+                          {formatCurrency(reservation.totalPrice)}
+                        </p>
+                      </div>
+                    </div>
                   </div>
-                  <div className="w-2/3 pl-4">
-                    <h3 className="font-medium">Route: Coastal Adventure</h3>
-                    <p className="text-sm text-gray-600">Guide: Sin guía</p>
-                    <p className="text-sm text-gray-600">Name of guide: Bili</p>
-                    <p className="text-accent font-medium mt-2">$31</p>
+                ))}
+              </div>
+              
+              <div className="bg-white rounded-lg p-4 shadow-sm mb-6">
+                <h3 className="font-medium mb-3">Resumen del Pedido</h3>
+                <div className="space-y-2 text-sm">
+                  <div className="flex justify-between">
+                    <span>Subtotal:</span>
+                    <span>{formatCurrency(calculateSubtotal())}</span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span>Impuestos (10%):</span>
+                    <span>{formatCurrency(calculateSubtotal() * 0.1)}</span>
+                  </div>
+                  <div className="border-t pt-2 flex justify-between font-medium">
+                    <span>Total:</span>
+                    <span className="text-primary">{formatCurrency(calculateSubtotal() * 1.1)}</span>
                   </div>
                 </div>
               </div>
               
-              <h3 className="font-medium mb-2">Available Shipping Methods</h3>
-              <div className="bg-white rounded-lg overflow-hidden shadow-sm mb-6">
-                <div className="border-b p-4 flex justify-between items-center">
-                  <label className="flex items-center">
-                    <input
-                      type="radio"
-                      name="shippingMethod"
-                      value="family-tour"
-                      checked={formData.shippingMethod === "family-tour"}
-                      onChange={handleRadioChange}
-                      className="mr-2 h-4 w-4 text-primary"
-                    />
-                    Family tour
-                  </label>
-                  <span className="font-medium">Free</span>
-                </div>
-              </div>
-              
-              <h3 className="font-medium mb-2">Payment Options</h3>
+              <h3 className="font-medium mb-2">Opciones de Pago</h3>
               <div className="bg-white rounded-lg overflow-hidden shadow-sm">
                 <div className="border-b p-4">
                   <label className="flex items-center">
@@ -110,7 +197,7 @@ const Checkout = () => {
                       onChange={handleRadioChange}
                       className="mr-2 h-4 w-4 text-primary"
                     />
-                    Credit card
+                    Tarjeta de Crédito
                   </label>
                 </div>
                 <div className="p-4">
@@ -131,15 +218,15 @@ const Checkout = () => {
             
             {/* Payment Details */}
             <div className="md:w-2/3">
-              <h2 className="heading-md mb-4">Payment details</h2>
+              <h2 className="heading-md mb-4">Detalles de Pago</h2>
               <p className="text-gray-600 mb-6">
-                Fill in your payment details and complete the order.
+                Completa tus datos de pago para finalizar la compra.
               </p>
               
               <form onSubmit={handleSubmit} className="space-y-6">
                 <div>
                   <label htmlFor="email" className="block text-sm font-medium text-gray-700 mb-1">
-                    Email Address
+                    Correo Electrónico
                   </label>
                   <input
                     id="email"
@@ -154,7 +241,7 @@ const Checkout = () => {
                 
                 <div>
                   <label htmlFor="fullName" className="block text-sm font-medium text-gray-700 mb-1">
-                    Full Name
+                    Nombre Completo
                   </label>
                   <input
                     id="fullName"
@@ -169,7 +256,7 @@ const Checkout = () => {
                 
                 <div>
                   <label htmlFor="address" className="block text-sm font-medium text-gray-700 mb-1">
-                    Address
+                    Dirección
                   </label>
                   <input
                     id="address"
@@ -184,7 +271,7 @@ const Checkout = () => {
                 
                 <div>
                   <label htmlFor="city" className="block text-sm font-medium text-gray-700 mb-1">
-                    City
+                    Ciudad
                   </label>
                   <input
                     id="city"
@@ -199,7 +286,7 @@ const Checkout = () => {
                 
                 <div>
                   <label htmlFor="zipCode" className="block text-sm font-medium text-gray-700 mb-1">
-                    Zip Code
+                    Código Postal
                   </label>
                   <input
                     id="zipCode"
@@ -216,7 +303,7 @@ const Checkout = () => {
                   <div className="space-y-4">
                     <div>
                       <label htmlFor="cardNumber" className="block text-sm font-medium text-gray-700 mb-1">
-                        Card Number
+                        Número de Tarjeta
                       </label>
                       <input
                         id="cardNumber"
@@ -230,13 +317,13 @@ const Checkout = () => {
                     <div className="flex space-x-4">
                       <div className="w-1/2">
                         <label htmlFor="expiry" className="block text-sm font-medium text-gray-700 mb-1">
-                          Expiry Date
+                          Fecha de Vencimiento
                         </label>
                         <input
                           id="expiry"
                           name="expiry"
                           type="text"
-                          placeholder="MM/YY"
+                          placeholder="MM/AA"
                           className="w-full p-2 border rounded-md focus:outline-none focus:ring-1 focus:ring-primary"
                         />
                       </div>
@@ -262,7 +349,7 @@ const Checkout = () => {
                   className="w-full btn-primary"
                   disabled={isSubmitting}
                 >
-                  {isSubmitting ? "Processing..." : "Finish purchase"}
+                  {isSubmitting ? "Procesando..." : "Finalizar Compra"}
                 </button>
               </form>
             </div>

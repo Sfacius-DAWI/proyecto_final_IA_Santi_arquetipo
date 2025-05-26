@@ -29,4 +29,65 @@ export default async function purchaseRoutes(fastify: FastifyInstance) {
     },
     handler: purchaseControllers.createPurchase
   });
+
+  // Obtener una compra específica por ID
+  fastify.get('/purchases/:id', {
+    onRequest: [verifyAuth],
+    schema: {
+      params: {
+        type: 'object',
+        properties: {
+          id: { type: 'string' }
+        },
+        required: ['id']
+      },
+      response: {
+        200: purchaseResponseSchema
+      }
+    },
+    handler: purchaseControllers.getPurchaseById
+  });
+
+  // Actualizar una compra
+  fastify.put('/purchases/:id', {
+    onRequest: [verifyAuth],
+    schema: {
+      params: {
+        type: 'object',
+        properties: {
+          id: { type: 'string' }
+        },
+        required: ['id']
+      },
+      body: {
+        type: 'object',
+        properties: {
+          cantidad: { type: 'integer', minimum: 1 },
+          fechaReservada: { type: 'string', format: 'date' }
+        }
+      },
+      response: {
+        200: purchaseResponseSchema
+      }
+    },
+    handler: purchaseControllers.updatePurchase
+  });
+
+  // Cancelar una compra
+  fastify.post('/purchases/:id/cancel', {
+    onRequest: [verifyAuth],
+    schema: {
+      params: {
+        type: 'object',
+        properties: {
+          id: { type: 'string' }
+        },
+        required: ['id']
+      },
+      response: {
+        200: purchaseResponseSchema
+      }
+    },
+    handler: purchaseControllers.cancelPurchase
+  });
 } 

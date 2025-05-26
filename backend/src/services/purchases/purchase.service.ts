@@ -69,4 +69,116 @@ export class PurchaseService {
       throw error;
     }
   }
+
+  async getPurchaseById(purchaseId: string, userId: string): Promise<Compra | null> {
+    try {
+      return await this.prisma.compra.findFirst({
+        where: { 
+          id: purchaseId,
+          userId: userId
+        },
+        include: {
+          tour: {
+            select: {
+              titulo: true,
+              imagen: true,
+              descripcion: true,
+              precio: true
+            }
+          }
+        }
+      });
+    } catch (error) {
+      console.error('Error al obtener la compra por ID:', error);
+      throw error;
+    }
+  }
+
+  async updatePurchase(purchaseId: string, userId: string, updateData: { cantidad?: number, fechaReservada?: string }): Promise<Compra | null> {
+    try {
+      // Verificar que la compra existe y pertenece al usuario
+      const existingPurchase = await this.prisma.compra.findFirst({
+        where: { 
+          id: purchaseId,
+          userId: userId,
+          estado: { in: ['PENDIENTE', 'COMPLETADO'] }
+        }
+      });
+
+      if (!existingPurchase) {
+        return null;
+      }
+
+      // Si se actualiza la cantidad, recalcular el precio total
+      let newPrecioTotal = existingPurchase.precioTotal;
+      if (updateData.cantidad && updateData.cantidad !== existingPurchase.cantidad) {
+        const tour = await this.prisma.tour.findUnique({
+          where: { id: existingPurchase.tourId },
+          select: { precio: true }
+        });
+
+                 if (tour) {
+           newPrecioTotal = tour.precio.mul(updateData.cantidad);
+         }
+      }
+
+      return await this.prisma.compra.update({
+        where: { id: purchaseId },
+        data: {
+          ...updateData,
+          ...(updateData.cantidad && { precioTotal: newPrecioTotal })
+        },
+        include: {
+          tour: {
+            select: {
+              titulo: true,
+              imagen: true,
+              descripcion: true,
+              precio: true
+            }
+          }
+        }
+      });
+    } catch (error) {
+      console.error('Error al actualizar la compra:', error);
+      throw error;
+    }
+  }
+
+  async cancelPurchase(purchaseId: string, userId: string): Promise<Compra | null> {
+    try {
+      // Verificar que la compra existe y pertenece al usuario
+      const existingPurchase = await this.prisma.compra.findFirst({
+        where: { 
+          id: purchaseId,
+          userId: userId,
+          estado: { in: ['PENDIENTE', 'COMPLETADO'] }
+        }
+      });
+
+      if (!existingPurchase) {
+        return null;
+      }
+
+      return await this.prisma.compra.update({
+        where: { id: purchaseId },
+        data: {
+          estado: 'CANCELADO'
+        },
+        include: {
+          tour: {
+            select: {
+              titulo: true,
+              imagen: true,
+              descripcion: true,
+              precio: true
+            }
+          }
+        }
+      });
+    } catch (error) {
+      console.error('Error al cancelar la compra:', error);
+      throw error;
+    }
+  }
 } 

@@ -66,5 +66,82 @@ export const purchaseControllers = {
         message: error instanceof Error ? error.message : 'Error desconocido'
       });
     }
+  },
+
+  async getPurchaseById(request: FastifyRequest<{ Params: { id: string } }>, reply: FastifyReply) {
+    try {
+      const userId = request.user?.id;
+      if (!userId) {
+        return reply.code(401).send({ error: 'Usuario no autenticado' });
+      }
+
+      const { id } = request.params;
+      const purchase = await purchaseService.getPurchaseById(id, userId);
+      
+      if (!purchase) {
+        return reply.code(404).send({ error: 'Compra no encontrada' });
+      }
+
+      return reply.send(purchase);
+    } catch (error) {
+      request.log.error('Error al obtener la compra:', error);
+      return reply.code(500).send({ 
+        error: 'Error al obtener la compra',
+        message: error instanceof Error ? error.message : 'Error desconocido'
+      });
+    }
+  },
+
+  async updatePurchase(request: FastifyRequest<{ 
+    Params: { id: string }, 
+    Body: { cantidad?: number, fechaReservada?: string } 
+  }>, reply: FastifyReply) {
+    try {
+      const userId = request.user?.id;
+      if (!userId) {
+        return reply.code(401).send({ error: 'Usuario no autenticado' });
+      }
+
+      const { id } = request.params;
+      const updateData = request.body;
+
+      const purchase = await purchaseService.updatePurchase(id, userId, updateData);
+      
+      if (!purchase) {
+        return reply.code(404).send({ error: 'Compra no encontrada' });
+      }
+
+      return reply.send(purchase);
+    } catch (error) {
+      request.log.error('Error al actualizar la compra:', error);
+      return reply.code(500).send({ 
+        error: 'Error al actualizar la compra',
+        message: error instanceof Error ? error.message : 'Error desconocido'
+      });
+    }
+  },
+
+  async cancelPurchase(request: FastifyRequest<{ Params: { id: string } }>, reply: FastifyReply) {
+    try {
+      const userId = request.user?.id;
+      if (!userId) {
+        return reply.code(401).send({ error: 'Usuario no autenticado' });
+      }
+
+      const { id } = request.params;
+      const purchase = await purchaseService.cancelPurchase(id, userId);
+      
+      if (!purchase) {
+        return reply.code(404).send({ error: 'Compra no encontrada' });
+      }
+
+      return reply.send(purchase);
+    } catch (error) {
+      request.log.error('Error al cancelar la compra:', error);
+      return reply.code(500).send({ 
+        error: 'Error al cancelar la compra',
+        message: error instanceof Error ? error.message : 'Error desconocido'
+      });
+    }
   }
 }; 

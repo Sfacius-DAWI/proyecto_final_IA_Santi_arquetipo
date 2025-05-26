@@ -1,0 +1,18 @@
+{
+  "mcpServers": {
+    "azure-postgres": {
+      "command": "npm",
+      "args": ["run", "mcp"],
+      "cwd": "./backend",
+      "env": {
+        "DATABASE_URL": "postgresql://usuario:password@servidor.postgres.database.azure.com:5432/basededatos?sslmode=require",
+        "POSTGRES_HOST": "servidor.postgres.database.azure.com",
+        "POSTGRES_PORT": "5432",
+        "POSTGRES_DB": "basededatos",
+        "POSTGRES_USER": "usuario",
+        "POSTGRES_PASSWORD": "password",
+        "POSTGRES_SSL": "true"
+      }
+    }
+  }
+} 
