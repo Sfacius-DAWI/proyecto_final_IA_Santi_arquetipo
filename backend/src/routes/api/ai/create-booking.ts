@@ -1,6 +1,7 @@
 import { FastifyInstance, FastifyRequest, FastifyReply } from 'fastify';
 import { Type, Static } from '@sinclair/typebox';
 import { PrismaClient, Prisma } from '@prisma/client';
+import { verifyAuth } from '../../../middleware/auth.js';
 
 const prisma = new PrismaClient();
 
@@ -25,6 +26,10 @@ const CreateBookingSchema = {
     400: Type.Object({
       success: Type.Boolean(),
       error: Type.String()
+    }),
+    401: Type.Object({
+      success: Type.Boolean(),
+      error: Type.String()
     })
   }
 };
@@ -34,6 +39,7 @@ type CreateBookingBody = Static<typeof CreateBookingSchema.body>;
 export default async function (fastify: FastifyInstance) {
   // Esta ruta se registrará como POST /api/ai/booking
   fastify.post<{ Body: CreateBookingBody }>('/booking', {
+    onRequest: [verifyAuth], // Requerir autenticación
     schema: CreateBookingSchema,
     handler: async (request: FastifyRequest<{ Body: CreateBookingBody }>, reply: FastifyReply) => {
       try {
@@ -47,6 +53,21 @@ export default async function (fastify: FastifyInstance) {
           paymentMethod,
           specialRequests
         } = request.body;
+
+        // Obtener el usuario autenticado del middleware
+        const authenticatedUserId = request.user?.id;
+        if (!authenticatedUserId) {
+          return reply.code(401).send({
+            success: false,
+            error: 'Usuario no autenticado. Debes iniciar sesión para hacer una reserva.'
+          });
+        }
+
+        request.log.info('Usuario autenticado haciendo reserva:', {
+          userId: authenticatedUserId,
+          email: userEmail,
+          tourName
+        });
 
         // 1. Buscar el tour por nombre
         const tour = await prisma.tour.findFirst({
@@ -63,46 +84,59 @@ export default async function (fastify: FastifyInstance) {
           });
         }
 
-        // 2. Verificar o crear usuario
-        let user = await prisma.user.findFirst({
-          where: { 
-            OR: [
-              { id: userEmail }, // Si usa email como ID
-              { email: userEmail } // Buscar por email también
-            ]
-          }
+        // 2. Verificar que el usuario existe o crearlo si es necesario
+        let user = await prisma.user.findUnique({
+          where: { id: authenticatedUserId }
         });
 
         if (!user) {
-          // Crear usuario nuevo para la reserva
-          // Generar un ID único que no conflicte con Firebase UIDs
-          const userId = `guest_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+          // Crear el usuario con el Firebase UID
           const [nombre, ...apellidoParts] = userName.split(' ');
           const apellido = apellidoParts.join(' ') || 'Sin Apellido';
           
           user = await prisma.user.create({
             data: {
-              id: userId, // Usar un ID único generado
+              id: authenticatedUserId, // Usar Firebase UID
               nombre: nombre,
               apellido: apellido,
-              email: userEmail, // IMPORTANTE: Guardar el email para vincular después
+              email: userEmail,
               role: 'USUARIO'
             }
           });
 
-          // Crear un registro auxiliar para asociar email con el usuario guest
-          // Podríamos agregar una tabla intermedia o usar un campo de metadata
-          request.log.info('Usuario guest creado:', {
+          request.log.info('Usuario creado desde Firebase:', {
             userId: user.id,
             email: userEmail,
             nombre: userName
           });
+        } else {
+          // Actualizar email si es diferente
+          if (user.email !== userEmail) {
+            user = await prisma.user.update({
+              where: { id: authenticatedUserId },
+              data: { email: userEmail }
+            });
+          }
         }
 
         // 3. Calcular precio total
         const precioTotal = tour.precio.mul(numberOfPeople);
 
-        // 4. Crear la reserva en la base de datos
+        // 4. Mapear método de pago al formato esperado por el schema
+        const metodoPagoMap: Record<string, string> = {
+          'credit_card': 'TARJETA',
+          'debit_card': 'TARJETA',
+          'tarjeta': 'TARJETA',
+          'credit-card': 'TARJETA',
+          'paypal': 'PAYPAL',
+          'bank_transfer': 'TRANSFERENCIA',
+          'transferencia': 'TRANSFERENCIA',
+          'transfer': 'TRANSFERENCIA'
+        };
+        
+        const metodoPagoMapeado = metodoPagoMap[paymentMethod.toLowerCase()] || 'TARJETA';
+
+        // 5. Crear la reserva en la base de datos
         const reserva = await prisma.reserva.create({
           data: {
             userId: user.id,
@@ -114,28 +148,30 @@ export default async function (fastify: FastifyInstance) {
           }
         });
 
-        // 5. Crear una compra relacionada
+        // 6. Crear una compra relacionada
         const compra = await prisma.compra.create({
           data: {
             userId: user.id,
             tourId: tour.id,
             cantidad: numberOfPeople,
             precioTotal: precioTotal,
-            metodoPago: paymentMethod,
+            metodoPago: metodoPagoMapeado,
             estado: 'PENDIENTE'
           }
         });
 
         // Log para desarrollo
-        request.log.info('Nueva reserva guardada en BD:', {
+        request.log.info('Nueva reserva autenticada guardada en BD:', {
           reservaId: reserva.id,
           compraId: compra.id,
+          userId: user.id,
           tourName: tour.titulo,
           userName,
           userEmail,
           numberOfPeople,
           preferredDate,
-          precioTotal: precioTotal.toString()
+          precioTotal: precioTotal.toString(),
+          metodoPago: metodoPagoMapeado
         });
 
         return reply.send({
@@ -146,7 +182,7 @@ export default async function (fastify: FastifyInstance) {
         });
 
       } catch (error) {
-        request.log.error('Error al crear reserva:', error);
+        request.log.error('Error al crear reserva autenticada:', error);
         
         // Manejo específico de errores de Prisma
         if (error instanceof Prisma.PrismaClientKnownRequestError) {

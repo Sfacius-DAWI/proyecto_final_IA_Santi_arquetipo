@@ -8,7 +8,10 @@ export async function verifyAuth(request: FastifyRequest, reply: FastifyReply) {
   try {
     const authHeader = request.headers.authorization;
     if (!authHeader?.startsWith('Bearer ')) {
-      return reply.code(401).send({ error: 'Token no proporcionado' });
+      return reply.code(401).send({ 
+        success: false, 
+        error: 'Token no proporcionado' 
+      });
     }
 
     const token = authHeader.split('Bearer ')[1];
@@ -89,6 +92,9 @@ export async function verifyAuth(request: FastifyRequest, reply: FastifyReply) {
     };
   } catch (error) {
     console.error('Error al verificar token:', error);
-    return reply.code(401).send({ error: 'Token inválido' });
+    return reply.code(401).send({ 
+      success: false, 
+      error: 'Token inválido' 
+    });
   }
 } 
