@@ -1,10 +1,11 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
 import PromoBanner from "../components/PromoBanner";
 import TourCard from "../components/TourCard";
 import { TourType } from "../types/tour";
 import { ArrowRight } from "lucide-react";
 import { IMAGES } from "@/constants/images";
+import { tourService } from "../services/tourService";
 
 const promoMessages = [
   "For free shipping on orders over $100 and more use code FREESHIPPINGYAY",
@@ -12,41 +13,32 @@ const promoMessages = [
   "Book guided tours over $100 and get a free souvenir with code TOURISTDEAL"
 ];
 
-const featuredTours: TourType[] = [
-  {
-    id: "1",
-    title: "Mountain Adventure",
-    image: IMAGES.tours.mountainAdventure,
-    price: 45,
-    tag: "Limited Edition",
-    tagType: "limited"
-  },
-  {
-    id: "2",
-    title: "Historic City Tour",
-    image: IMAGES.tours.historicCity,
-    price: 19,
-    tag: "New Arrival",
-    tagType: "new"
-  },
-  {
-    id: "3",
-    title: "Nature Tours",
-    image: IMAGES.tours.natureTours,
-    price: 31
-  },
-  {
-    id: "4",
-    title: "Sunset Excursion",
-    image: IMAGES.tours.sunsetExcursion,
-    price: 59,
-    tag: "Perfect for Photo Lovers",
-    tagType: "popular"
-  }
-];
-
 const Home = () => {
   const [email, setEmail] = useState("");
+  const [featuredTours, setFeaturedTours] = useState<TourType[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    const fetchFeaturedTours = async () => {
+      try {
+        console.log('🚀 Starting featured tours loading...');
+        setLoading(true);
+        const tours = await tourService.getFeaturedTours(4);
+        console.log('✅ Featured tours received in Home:', tours);
+        console.log('📊 Number of tours:', tours.length);
+        setFeaturedTours(tours);
+        setError(null);
+      } catch (err) {
+        console.error('❌ Error loading featured tours:', err);
+        setError('Error loading featured tours. Please try again later.');
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchFeaturedTours();
+  }, []);
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -80,14 +72,14 @@ const Home = () => {
           <div className="md:w-1/2">
             <div className="relative rounded-lg overflow-hidden shadow-xl">
               <img 
-                src={IMAGES.tours.natureTours}
+                src={IMAGES.tours.natureCaves}
                 alt="Nature Tours" 
                 className="w-full h-[400px] object-cover"
               />
               <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/70 to-transparent p-6">
                 <h3 className="text-white text-2xl font-semibold mb-2">Nature Tours</h3>
                 <p className="text-white/90 mb-3">Experience the beauty of untouched landscapes</p>
-                <Link to="/tour/3" className="inline-block text-white font-medium underline">
+                <Link to="/tour/2" className="inline-block text-white font-medium underline">
                   Learn more
                 </Link>
               </div>
@@ -104,11 +96,28 @@ const Home = () => {
             View all tours <ArrowRight className="ml-2 w-5 h-5" />
           </Link>
         </div>
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-          {featuredTours.map(tour => (
-            <TourCard key={tour.id} tour={tour} />
-          ))}
-        </div>
+        {loading ? (
+          <div className="text-center py-12">
+            <p className="text-xl">Loading featured tours...</p>
+          </div>
+        ) : error ? (
+          <div className="text-center py-12 text-red-600">
+            <p>{error}</p>
+          </div>
+        ) : (
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+            {featuredTours.map(tour => (
+              <TourCard key={tour.id} tour={tour} />
+            ))}
+          </div>
+        )}
+        
+        {!loading && !error && featuredTours.length === 0 && (
+          <div className="text-center py-12">
+            <h3 className="text-xl font-medium mb-2">No featured tours available</h3>
+            <p className="text-gray-600">Come back later to see our featured tours.</p>
+          </div>
+        )}
       </section>
       
       {/* Why Choose Us Section */}

@@ -5,7 +5,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { CartReservation } from "@/services/reservationService";
 import { format } from "date-fns";
-import { es } from "date-fns/locale";
+import { enUS } from "date-fns/locale";
 
 interface ReservationCartItemProps {
   reservation: CartReservation;
@@ -32,14 +32,14 @@ const ReservationCartItem: React.FC<ReservationCartItemProps> = ({
   const formatDate = (dateString: string) => {
     try {
       const date = new Date(dateString);
-      return format(date, "PPP", { locale: es });
+      return format(date, "PPP", { locale: enUS });
     } catch {
       return dateString;
     }
   };
 
   const formatCurrency = (amount: number) => {
-    return new Intl.NumberFormat('es-ES', {
+    return new Intl.NumberFormat('en-US', {
       style: 'currency',
       currency: 'USD'
     }).format(amount);
@@ -49,7 +49,7 @@ const ReservationCartItem: React.FC<ReservationCartItemProps> = ({
     <Card className="mb-4">
       <CardContent className="p-6">
         <div className="flex flex-col md:flex-row gap-4">
-          {/* Imagen del tour */}
+          {/* Tour image */}
           <div className="w-full md:w-32 h-32 flex-shrink-0">
             <img
               src={reservation.tourImage}
@@ -58,7 +58,7 @@ const ReservationCartItem: React.FC<ReservationCartItemProps> = ({
             />
           </div>
 
-          {/* Información del tour */}
+          {/* Tour information */}
           <div className="flex-1 space-y-3">
             <div className="flex justify-between items-start">
               <h3 className="text-lg font-semibold text-gray-900">
@@ -75,24 +75,24 @@ const ReservationCartItem: React.FC<ReservationCartItemProps> = ({
               </Button>
             </div>
 
-            {/* Detalles de la reserva */}
+            {/* Reservation details */}
             <div className="grid grid-cols-1 md:grid-cols-2 gap-3 text-sm text-gray-600">
               <div className="flex items-center">
                 <Calendar className="h-4 w-4 mr-2 text-primary" />
-                <span>Fecha: {formatDate(reservation.tourDate)}</span>
+                <span>Date: {formatDate(reservation.tourDate)}</span>
               </div>
               
               <div className="flex items-center">
                 <Users className="h-4 w-4 mr-2 text-primary" />
-                <span>Personas: {reservation.numberOfPeople}</span>
+                <span>People: {reservation.numberOfPeople}</span>
               </div>
               
               <div className="flex items-center">
                 <User className="h-4 w-4 mr-2 text-primary" />
                 <span>
                   {reservation.withGuide 
-                    ? `Con guía: ${reservation.guideName || 'Por asignar'}`
-                    : 'Sin guía'
+                    ? `With guide: ${reservation.guideName || 'To be assigned'}`
+                    : 'Without guide'
                   }
                 </span>
               </div>
@@ -103,30 +103,30 @@ const ReservationCartItem: React.FC<ReservationCartItemProps> = ({
               </div>
             </div>
 
-            {/* Solicitudes adicionales */}
+            {/* Additional requests */}
             {reservation.additionalRequests && (
               <div className="mt-2">
                 <Badge variant="outline" className="text-xs">
-                  Solicitudes especiales: {reservation.additionalRequests}
+                  Special requests: {reservation.additionalRequests}
                 </Badge>
               </div>
             )}
 
-            {/* Información de contacto */}
+            {/* Contact information */}
             <div className="text-xs text-gray-500 space-y-1">
               <div>Email: {reservation.contactInformation.email}</div>
-              <div>Teléfono: {reservation.contactInformation.phone}</div>
+              <div>Phone: {reservation.contactInformation.phone}</div>
             </div>
           </div>
 
-          {/* Precio */}
+          {/* Price */}
           <div className="flex flex-col justify-between items-end">
             <div className="text-right">
               <div className="text-lg font-bold text-primary">
                 {formatCurrency(reservation.totalPrice)}
               </div>
               <div className="text-sm text-gray-500">
-                {formatCurrency(reservation.totalPrice / reservation.numberOfPeople)} / persona
+                {formatCurrency(reservation.totalPrice / reservation.numberOfPeople)} / person
               </div>
             </div>
           </div>

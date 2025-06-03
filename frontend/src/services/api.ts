@@ -1,62 +1,77 @@
 import axios from 'axios';
 
-// Asegurarnos de que la URL del backend esté correctamente formada
+// Configuración simplificada para desarrollo
 const getBackendUrl = () => {
-  // En desarrollo, usar la URL relativa para que funcione con el proxy de Vite
   const isDevelopment = import.meta.env.MODE === 'development';
-  const url = isDevelopment ? '/api' : import.meta.env.VITE_BACKEND_URL || 'http://localhost:3003';
-  console.log('URL del backend:', url);
-  return url;
+  
+  if (isDevelopment) {
+    // En desarrollo, usar directamente el puerto del backend
+    return 'http://localhost:3003';
+  }
+  
+  // En producción, usar la variable de entorno o fallback
+  return import.meta.env.VITE_BACKEND_URL || 'http://localhost:3003';
 };
 
 const BACKEND_URL = getBackendUrl();
-console.log('URL del backend configurada:', BACKEND_URL);
+console.log('🔗 API configurada para:', BACKEND_URL);
 
 const api = axios.create({
   baseURL: BACKEND_URL,
   headers: {
     'Content-Type': 'application/json',
   },
-  // Configuración adicional
-  timeout: 10000, // 10 segundos de timeout
-  withCredentials: true, // Habilitar credenciales para CORS
+  timeout: 15000, // 15 segundos de timeout
+  withCredentials: false, // Deshabilitar credenciales por ahora
 });
 
-// Interceptor para manejar errores
-api.interceptors.response.use(
-  (response) => response,
+// Interceptor para debug de peticiones
+api.interceptors.request.use(
+  (config) => {
+    const fullUrl = `${config.baseURL}${config.url}`;
+    console.log('🚀 Enviando petición:', {
+      method: config.method?.toUpperCase(),
+      url: fullUrl,
+      data: config.data
+    });
+    return config;
+  },
   (error) => {
-    if (error.response) {
-      // El servidor respondió con un código de estado fuera del rango 2xx
-      console.error('Error de respuesta:', {
-        status: error.response.status,
-        data: error.response.data,
-        headers: error.response.headers
-      });
-    } else if (error.request) {
-      // La petición fue hecha pero no se recibió respuesta
-      console.error('Error de petición:', {
-        url: error.config?.url,
-        method: error.config?.method,
-        baseURL: error.config?.baseURL,
-        error: error.message
-      });
-    } else {
-      // Algo sucedió en la configuración de la petición que causó el error
-      console.error('Error de configuración:', error.message);
-    }
+    console.error('❌ Error en configuración de petición:', error);
     return Promise.reject(error);
   }
 );
 
-// Interceptor para peticiones
-api.interceptors.request.use(
-  (config) => {
-    console.log('Realizando petición a:', config.baseURL + config.url);
-    return config;
+// Interceptor para manejar respuestas y errores
+api.interceptors.response.use(
+  (response) => {
+    console.log('✅ Respuesta exitosa:', {
+      status: response.status,
+      url: response.config.url,
+      data: response.data
+    });
+    return response;
   },
   (error) => {
-    console.error('Error en la configuración de la petición:', error);
+    if (error.response) {
+      // El servidor respondió con un código de error
+      console.error('❌ Error de servidor:', {
+        status: error.response.status,
+        statusText: error.response.statusText,
+        url: error.config?.url,
+        data: error.response.data
+      });
+    } else if (error.request) {
+      // La petición fue hecha pero no se recibió respuesta
+      console.error('❌ Error de conexión:', {
+        message: error.message,
+        url: error.config?.url,
+        baseURL: error.config?.baseURL
+      });
+    } else {
+      // Error en la configuración de la petición
+      console.error('❌ Error de configuración:', error.message);
+    }
     return Promise.reject(error);
   }
 );

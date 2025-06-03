@@ -13,7 +13,7 @@ const Login = () => {
   const location = useLocation();
   const { login, loginWithGoogle } = useAuth();
   
-  // Obtener la ubicación de redirección si existe
+  // Get redirect location if it exists
   const from = location.state?.from?.pathname || "/dashboard";
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -24,7 +24,7 @@ const Login = () => {
       await login(email, password);
       navigate(from, { replace: true });
     } catch (error) {
-      // Error ya manejado en el contexto de autenticación
+      // Error already handled in authentication context
     } finally {
       setLoading(false);
     }
@@ -37,7 +37,7 @@ const Login = () => {
       await loginWithGoogle();
       navigate(from, { replace: true });
     } catch (error) {
-      // Error ya manejado en el contexto de autenticación
+      // Error already handled in authentication context
     } finally {
       setLoading(false);
     }
@@ -47,7 +47,7 @@ const Login = () => {
     <div className="min-h-screen bg-gray-50">
       <div className="container-custom section-padding flex flex-col items-center">
         <div className="w-full max-w-md">
-          <h1 className="heading-lg text-center mb-8">Bienvenido de nuevo</h1>
+          <h1 className="heading-lg text-center mb-8">Welcome back</h1>
           
           <div className="bg-white p-8 rounded-lg shadow-sm">
             <form onSubmit={handleSubmit} className="space-y-6">
@@ -58,14 +58,14 @@ const Login = () => {
                   type="email"
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
-                  placeholder="tu@email.com"
+                  placeholder="your@email.com"
                   required
                   disabled={loading}
                 />
               </div>
               
               <div className="space-y-2">
-                <Label htmlFor="password">Contraseña</Label>
+                <Label htmlFor="password">Password</Label>
                 <Input
                   id="password"
                   type="password"
@@ -79,16 +79,16 @@ const Login = () => {
               
               <div className="flex items-center justify-between">
                 <Link to="/forgot-password" className="text-sm text-primary hover:text-accent">
-                  ¿Olvidaste tu contraseña?
+                  Forgot your password?
                 </Link>
                 <Link to="/purchases" className="text-sm text-primary hover:text-accent">
-                  Ver Compras
+                  View Purchases
                 </Link>
               </div>
               
               <div className="space-y-3">
                 <Button type="submit" className="w-full btn-primary" disabled={loading}>
-                  {loading ? "Iniciando sesión..." : "Iniciar sesión"}
+                  {loading ? "Signing in..." : "Sign in"}
                 </Button>
                 
                 <div className="relative">
@@ -96,7 +96,7 @@ const Login = () => {
                     <span className="w-full border-t" />
                   </div>
                   <div className="relative flex justify-center text-xs uppercase">
-                    <span className="bg-white px-2 text-muted-foreground">O</span>
+                    <span className="bg-white px-2 text-muted-foreground">Or</span>
                   </div>
                 </div>
 
@@ -108,7 +108,7 @@ const Login = () => {
                   disabled={loading}
                 >
                   <img src="/google-icon.svg" alt="Google" className="w-5 h-5" />
-                  Continuar con Google
+                  Continue with Google
                 </Button>
 
                 <Button 
@@ -118,14 +118,14 @@ const Login = () => {
                   onClick={() => navigate('/register')}
                   disabled={loading}
                 >
-                  Crear una cuenta nueva
+                  Create a new account
                 </Button>
               </div>
               
               <p className="text-center text-sm text-gray-600">
-                ¿No tienes una cuenta?{" "}
+                Don't have an account?{" "}
                 <Link to="/register" className="text-primary hover:text-accent font-medium">
-                  Regístrate aquí
+                  Sign up here
                 </Link>
               </p>
             </form>

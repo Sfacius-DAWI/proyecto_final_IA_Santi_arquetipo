@@ -12,7 +12,7 @@ export default defineConfig(({ mode }) => ({
       '/api': {
         target: mode === 'development' ? 'http://localhost:3003' : 'http://backend:3003',
         changeOrigin: true,
-        rewrite: (path) => path.replace(/^\/api/, '')
+        rewrite: (path) => path,
       }
     }
   },

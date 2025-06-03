@@ -30,6 +30,9 @@ interface AuthContextType {
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
+// Exportar el contexto para uso en otros archivos
+export { AuthContext };
+
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [currentUser, setCurrentUser] = useState<User | null>(null);
   const [userProfile, setUserProfile] = useState<UserProfile | null>(null);
@@ -37,14 +40,24 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [profileLoading, setProfileLoading] = useState(false);
 
   async function fetchUserProfile(user: User) {
-    if (!user) return;
+    if (!user) {
+      console.log('👤 No hay usuario autenticado, omitiendo carga de perfil');
+      return;
+    }
     
     try {
       setProfileLoading(true);
       const profile = await getUserProfile(user.uid);
       setUserProfile(profile);
-    } catch (error) {
-      console.error('Error al cargar perfil de usuario:', error);
+    } catch (error: any) {
+      // Solo mostrar errores que no sean de conexión offline
+      if (error?.code !== 'unavailable' && 
+          !error?.message?.includes('client is offline') &&
+          !error?.message?.includes('Connection failed')) {
+        console.error('Error loading user profile:', error);
+      }
+      // Establecer perfil null en caso de error
+      setUserProfile(null);
     } finally {
       setProfileLoading(false);
     }
@@ -54,9 +67,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     const unsubscribe = onAuthStateChanged(auth, (user) => {
       setCurrentUser(user);
       if (user) {
+        console.log('✅ Usuario autenticado detectado, cargando perfil...');
         fetchUserProfile(user);
       } else {
+        console.log('❌ Usuario no autenticado, limpiando perfil...');
         setUserProfile(null);
+        setProfileLoading(false);
       }
       setLoading(false);
     });
@@ -67,19 +83,19 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   async function register(email: string, password: string) {
     try {
       await createUserWithEmailAndPassword(auth, email, password);
-      toast.success('¡Registro exitoso!');
+      toast.success('Registration successful!');
     } catch (error: any) {
-      let errorMessage = 'Error al registrar usuario';
+      let errorMessage = 'Error registering user';
       
       switch (error.code) {
         case 'auth/email-already-in-use':
-          errorMessage = 'Este email ya está registrado';
+          errorMessage = 'This email is already registered';
           break;
         case 'auth/invalid-email':
-          errorMessage = 'Email inválido';
+          errorMessage = 'Invalid email';
           break;
         case 'auth/weak-password':
-          errorMessage = 'La contraseña debe tener al menos 6 caracteres';
+          errorMessage = 'Password must be at least 6 characters';
           break;
       }
       
@@ -91,9 +107,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   async function login(email: string, password: string) {
     try {
       await signInWithEmailAndPassword(auth, email, password);
-      toast.success('¡Inicio de sesión exitoso!');
+      toast.success('Login successful!');
     } catch (error: any) {
-      toast.error('Email o contraseña incorrectos');
+      toast.error('Incorrect email or password');
       throw error;
     }
   }
@@ -102,9 +118,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     try {
       const provider = new GoogleAuthProvider();
       await signInWithPopup(auth, provider);
-      toast.success('¡Inicio de sesión con Google exitoso!');
+      toast.success('Google login successful!');
     } catch (error) {
-      toast.error('Error al iniciar sesión con Google');
+      toast.error('Error signing in with Google');
       throw error;
     }
   }
@@ -112,9 +128,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   async function logout() {
     try {
       await signOut(auth);
-      toast.success('Sesión cerrada exitosamente');
+      toast.success('Session closed successfully');
     } catch (error) {
-      toast.error('Error al cerrar sesión');
+      toast.error('Error signing out');
       throw error;
     }
   }
@@ -122,26 +138,26 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   async function resetPassword(email: string) {
     try {
       await sendPasswordResetEmail(auth, email);
-      toast.success('Se ha enviado un correo para restablecer tu contraseña');
+      toast.success('A password reset email has been sent');
     } catch (error) {
-      toast.error('Error al enviar el correo para restablecer contraseña');
+      toast.error('Error sending password reset email');
       throw error;
     }
   }
 
   async function updateUserProfile(data: ProfileUpdateData) {
     if (!currentUser) {
-      toast.error('Debes iniciar sesión para actualizar tu perfil');
-      throw new Error('Usuario no autenticado');
+      toast.error('You must be logged in to update your profile');
+      throw new Error('User not authenticated');
     }
 
     try {
       setProfileLoading(true);
       await saveUserProfile(currentUser, data);
       await refreshUserProfile();
-      toast.success('Perfil actualizado correctamente');
+      toast.success('Profile updated successfully');
     } catch (error) {
-      toast.error('Error al actualizar el perfil');
+      toast.error('Error updating profile');
       throw error;
     } finally {
       setProfileLoading(false);
@@ -156,7 +172,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       const profile = await getUserProfile(currentUser.uid);
       setUserProfile(profile);
     } catch (error) {
-      console.error('Error al refrescar perfil:', error);
+      console.error('Error refreshing profile:', error);
     } finally {
       setProfileLoading(false);
     }
@@ -186,7 +202,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 export function useAuth() {
   const context = useContext(AuthContext);
   if (context === undefined) {
-    throw new Error('useAuth debe ser usado dentro de un AuthProvider');
+    throw new Error('useAuth must be used within an AuthProvider');
   }
   return context;
 } 

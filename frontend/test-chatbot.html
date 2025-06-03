@@ -1,0 +1,208 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Test Chatbot - Sin Firebase</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            padding: 20px;
+            background-color: #f5f5f5;
+        }
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        h1 {
+            color: #333;
+        }
+        .status {
+            padding: 10px;
+            border-radius: 4px;
+            margin: 10px 0;
+        }
+        .success {
+            background-color: #d4edda;
+            color: #155724;
+            border: 1px solid #c3e6cb;
+        }
+        .error {
+            background-color: #f8d7da;
+            color: #721c24;
+            border: 1px solid #f5c6cb;
+        }
+        .info {
+            background-color: #d1ecf1;
+            color: #0c5460;
+            border: 1px solid #bee5eb;
+        }
+        button {
+            background-color: #007bff;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 4px;
+            cursor: pointer;
+            margin: 5px;
+        }
+        button:hover {
+            background-color: #0056b3;
+        }
+        #results {
+            margin-top: 20px;
+            padding: 10px;
+            background-color: #f8f9fa;
+            border-radius: 4px;
+            white-space: pre-wrap;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🤖 Test del Chatbot - Sin Firebase</h1>
+        
+        <div class="status info">
+            <strong>Estado:</strong> Esta página prueba el chatbot sin depender de Firebase
+        </div>
+
+        <h2>Pruebas del Chatbot:</h2>
+        
+        <button onclick="testChatEndpoint()">1. Probar Endpoint del Chat</button>
+        <button onclick="testFormGeneration()">2. Probar Generación de Formulario</button>
+        <button onclick="testBookingEndpoint()">3. Probar Endpoint de Reserva</button>
+        
+        <div id="results"></div>
+
+        <div class="status success" style="margin-top: 20px;">
+            <strong>✅ Solución Aplicada:</strong><br>
+            - El chatbot ahora está fuera del AuthProvider<br>
+            - No depende de Firebase para funcionar<br>
+            - Los formularios se envían correctamente
+        </div>
+
+        <h2>Para probar en la aplicación:</h2>
+        <ol>
+            <li>Abre <a href="http://localhost:8080" target="_blank">http://localhost:8080</a></li>
+            <li>Haz clic en el botón del chat (esquina inferior derecha)</li>
+            <li>Escribe: "Quiero reservar un tour de montaña"</li>
+            <li>Deberías ver un formulario sin errores de Firebase</li>
+        </ol>
+    </div>
+
+    <script>
+        const API_URL = 'http://localhost:3003';
+        const resultsDiv = document.getElementById('results');
+
+        function showResult(message, type = 'info') {
+            resultsDiv.innerHTML += `<div class="status ${type}">${message}</div>`;
+        }
+
+        async function testChatEndpoint() {
+            resultsDiv.innerHTML = '';
+            showResult('Probando endpoint /api/ai/chat...');
+            
+            try {
+                const response = await fetch(`${API_URL}/api/ai/chat`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        sessionId: 'test_' + Date.now(),
+                        prompt: '¿Qué tours tienes disponibles?',
+                        timestamp: new Date().toISOString()
+                    })
+                });
+
+                const data = await response.json();
+                
+                if (response.ok) {
+                    showResult('✅ Endpoint funcionando correctamente', 'success');
+                    showResult('Respuesta: ' + JSON.stringify(data, null, 2));
+                } else {
+                    showResult('❌ Error en el endpoint', 'error');
+                    showResult('Error: ' + JSON.stringify(data, null, 2));
+                }
+            } catch (error) {
+                showResult('❌ Error de conexión: ' + error.message, 'error');
+            }
+        }
+
+        async function testFormGeneration() {
+            resultsDiv.innerHTML = '';
+            showResult('Probando generación de formulario...');
+            
+            try {
+                const response = await fetch(`${API_URL}/api/ai/chat`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        sessionId: 'test_' + Date.now(),
+                        prompt: 'Quiero reservar un tour de montaña',
+                        timestamp: new Date().toISOString()
+                    })
+                });
+
+                const data = await response.json();
+                
+                if (response.ok && data.type === 'form') {
+                    showResult('✅ Formulario generado correctamente', 'success');
+                    showResult('Formulario: ' + JSON.stringify(data.form, null, 2));
+                } else {
+                    showResult('❌ No se generó el formulario esperado', 'error');
+                    showResult('Respuesta: ' + JSON.stringify(data, null, 2));
+                }
+            } catch (error) {
+                showResult('❌ Error de conexión: ' + error.message, 'error');
+            }
+        }
+
+        async function testBookingEndpoint() {
+            resultsDiv.innerHTML = '';
+            showResult('Probando endpoint /api/ai/booking...');
+            
+            try {
+                const response = await fetch(`${API_URL}/api/ai/booking`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        sessionId: 'test_' + Date.now(),
+                        formData: {
+                            tourName: 'Tour de Montaña',
+                            fullName: 'Test Usuario',
+                            email: 'test@example.com',
+                            phone: '123456789',
+                            numberOfPeople: 2,
+                            date: '2024-12-25',
+                            paymentMethod: 'credit_card',
+                            specialRequests: 'Ninguna'
+                        },
+                        timestamp: new Date().toISOString()
+                    })
+                });
+
+                const data = await response.json();
+                
+                if (response.ok) {
+                    showResult('✅ Reserva creada correctamente', 'success');
+                    showResult('Respuesta: ' + JSON.stringify(data, null, 2));
+                } else {
+                    showResult('❌ Error al crear reserva', 'error');
+                    showResult('Error: ' + JSON.stringify(data, null, 2));
+                }
+            } catch (error) {
+                showResult('❌ Error de conexión: ' + error.message, 'error');
+            }
+        }
+    </script>
+</body>
+</html> 

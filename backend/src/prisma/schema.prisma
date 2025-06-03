@@ -22,6 +22,7 @@ model User {
   id          String       @id // Usaremos el UID de Firebase
   nombre      String
   apellido    String
+  email       String?      // Email opcional para usuarios guest del chatbot
   role        Role         @default(USUARIO)
   createdAt   DateTime     @default(now())
   updatedAt   DateTime     @updatedAt
@@ -46,6 +47,7 @@ model Tour {
   imagen       String
   duracion     Int // duración en minutos
   disponible   Boolean     @default(true)
+  featured     Boolean     @default(false) // Campo para tours destacados
   etiqueta     String? // Para "Limited Edition", "New Arrival", etc.
   tipoEtiqueta String? // "limited", "new", "popular"
   createdAt    DateTime    @default(now())

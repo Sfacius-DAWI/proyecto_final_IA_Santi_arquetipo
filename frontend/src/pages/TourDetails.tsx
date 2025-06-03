@@ -26,7 +26,7 @@ const TourDetails = () => {
   const [error, setError] = useState<string | null>(null);
   const [selectedGuide, setSelectedGuide] = useState<number>(0);
   const [similarTours, setSimilarTours] = useState<TourType[]>([]);
-  const [activeTab, setActiveTab] = useState("descripcion");
+  const [activeTab, setActiveTab] = useState("description");
   
   useEffect(() => {
     const fetchTourDetails = async () => {
@@ -50,7 +50,7 @@ const TourDetails = () => {
         
         setError(null);
       } catch (err) {
-        setError('Error al cargar los detalles del tour. Por favor, intente más tarde.');
+        setError('Error loading tour details. Please try again later.');
       } finally {
         setLoading(false);
       }
@@ -66,7 +66,7 @@ const TourDetails = () => {
   if (loading) {
     return (
       <div className="min-h-screen flex items-center justify-center">
-        <p className="text-xl">Cargando detalles del tour...</p>
+        <p className="text-xl">Loading tour details...</p>
       </div>
     );
   }
@@ -75,9 +75,9 @@ const TourDetails = () => {
     return (
       <div className="min-h-screen flex items-center justify-center">
         <div className="text-center">
-          <p className="text-xl text-red-600 mb-4">{error || 'Tour no encontrado'}</p>
+          <p className="text-xl text-red-600 mb-4">{error || 'Tour not found'}</p>
           <Link to="/tours" className="text-primary hover:underline">
-            Volver a todos los tours
+            Back to all tours
           </Link>
         </div>
       </div>
@@ -155,7 +155,7 @@ const TourDetails = () => {
                     <div className="flex items-center">
                       <Clock className="w-5 h-5 text-primary mr-2" />
                       <div>
-                        <p className="text-sm text-gray-600">Duración</p>
+                        <p className="text-sm text-gray-600">Duration</p>
                         <p className="font-medium">{tour.duration}</p>
                       </div>
                     </div>
@@ -165,7 +165,7 @@ const TourDetails = () => {
                     <div className="flex items-center">
                       <Users className="w-5 h-5 text-primary mr-2" />
                       <div>
-                        <p className="text-sm text-gray-600">Tamaño del grupo</p>
+                        <p className="text-sm text-gray-600">Group Size</p>
                         <p className="font-medium">{tour.groupSize}</p>
                       </div>
                     </div>
@@ -175,7 +175,7 @@ const TourDetails = () => {
                     <div className="flex items-center">
                       <Calendar className="w-5 h-5 text-primary mr-2" />
                       <div>
-                        <p className="text-sm text-gray-600">Próximas fechas</p>
+                        <p className="text-sm text-gray-600">Next Dates</p>
                         <p className="font-medium">{tour.startDates.slice(0, 1).join(", ")}</p>
                       </div>
                     </div>
@@ -185,7 +185,7 @@ const TourDetails = () => {
                     <div className="flex items-center">
                       <Map className="w-5 h-5 text-primary mr-2" />
                       <div>
-                        <p className="text-sm text-gray-600">Ubicación</p>
+                        <p className="text-sm text-gray-600">Location</p>
                         <p className="font-medium">{tour.location}</p>
                       </div>
                     </div>
@@ -196,12 +196,12 @@ const TourDetails = () => {
                   <div className="flex justify-between items-center mb-2">
                     <div>
                       <span className="text-2xl font-bold text-primary">${tour.price}</span>
-                      <span className="text-gray-600"> / persona</span>
+                      <span className="text-gray-600"> / person</span>
                     </div>
                     
                     {tour.hasGuideOption && (
                       <div className="text-right">
-                        <p className="text-sm text-gray-600">Sin guía desde</p>
+                        <p className="text-sm text-gray-600">Without guide from</p>
                         <p className="font-medium">${tour.priceWithoutGuide || Math.floor(tour.price * 0.8)}</p>
                       </div>
                     )}
@@ -210,7 +210,7 @@ const TourDetails = () => {
                   <div className="flex space-x-2">
                     <Link to={`/tour/${id}/book`} className="w-full">
                       <button className="w-full btn-primary">
-                        Reservar ahora
+                        Book Now
                       </button>
                     </Link>
                   </div>
@@ -218,7 +218,7 @@ const TourDetails = () => {
                 
                 {tour.features && tour.features.length > 0 && (
                   <div>
-                    <h3 className="font-medium text-lg mb-2">Lo que incluye:</h3>
+                    <h3 className="font-medium text-lg mb-2">What's included:</h3>
                     <ul className="space-y-2">
                       {tour.features.map((feature, index) => (
                         <li key={index} className="flex items-start">
@@ -239,27 +239,27 @@ const TourDetails = () => {
       <div className="container-custom py-12">
         <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
           <TabsList className="mb-8">
-            <TabsTrigger value="descripcion">Descripción</TabsTrigger>
-            <TabsTrigger value="itinerario">Itinerario</TabsTrigger>
-            <TabsTrigger value="guias">Guías</TabsTrigger>
-            <TabsTrigger value="reservar">Reservar</TabsTrigger>
+            <TabsTrigger value="description">Description</TabsTrigger>
+            <TabsTrigger value="itinerary">Itinerary</TabsTrigger>
+            <TabsTrigger value="guides">Guides</TabsTrigger>
+
           </TabsList>
           
-          <TabsContent value="descripcion" className="mt-0">
+          <TabsContent value="description" className="mt-0">
             <div className="space-y-8">
               <div>
-                <h2 className="text-2xl font-semibold mb-4">Sobre este tour</h2>
+                <h2 className="text-2xl font-semibold mb-4">About this tour</h2>
                 <p className="text-gray-600 whitespace-pre-line">{tour.description}</p>
               </div>
               
               {tour.availableDates && tour.availableDates.length > 0 && (
                 <div>
-                  <h3 className="text-xl font-semibold mb-4">Fechas disponibles</h3>
+                  <h3 className="text-xl font-semibold mb-4">Available dates</h3>
                   <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-2">
                     {tour.availableDates.slice(0, 10).map((dateInfo, index) => (
                       <div key={index} className="border rounded-md p-2 text-center">
                         <p className="font-medium">{dateInfo.date}</p>
-                        <p className="text-sm text-gray-600">{dateInfo.availableSpots} plazas</p>
+                        <p className="text-sm text-gray-600">{dateInfo.availableSpots} spots</p>
                       </div>
                     ))}
                   </div>
@@ -268,11 +268,11 @@ const TourDetails = () => {
             </div>
           </TabsContent>
           
-          <TabsContent value="itinerario" className="mt-0">
+          <TabsContent value="itinerary" className="mt-0">
             <TourItinerary itinerary={tour.itinerary || []} />
           </TabsContent>
           
-          <TabsContent value="guias" className="mt-0">
+          <TabsContent value="guides" className="mt-0">
             <TourGuides 
               guides={tour.availableGuides || []} 
               onSelectGuide={handleSelectGuide}
@@ -280,9 +280,6 @@ const TourDetails = () => {
             />
           </TabsContent>
           
-          <TabsContent value="reservar" className="mt-0">
-            <TourBooking tour={tour} />
-          </TabsContent>
         </Tabs>
       </div>
       
@@ -290,7 +287,7 @@ const TourDetails = () => {
       {similarTours.length > 0 && (
         <div className="bg-secondary py-12">
           <div className="container-custom">
-            <h2 className="heading-md text-center mb-8">Tours similares que te pueden interesar</h2>
+            <h2 className="heading-md text-center mb-8">Similar tours you might like</h2>
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
               {similarTours.map(tour => (
                 <TourCard key={tour.id} tour={tour} />

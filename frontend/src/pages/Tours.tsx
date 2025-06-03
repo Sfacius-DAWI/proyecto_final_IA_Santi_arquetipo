@@ -13,7 +13,7 @@ const promoMessages = [
 
 type FilterType = "all" | "city" | "nature" | "adventure";
 
-// Mapeo de términos de búsqueda por categoría
+// Search terms mapping by category
 const filterTerms = {
   city: ['city', 'ciudad', 'urbano', 'urban', 'histórico', 'historic'],
   nature: ['nature', 'naturaleza', 'natural', 'eco', 'parque', 'park'],
@@ -29,15 +29,15 @@ const Tours = () => {
   useEffect(() => {
     const fetchTours = async () => {
       try {
-        console.log('Iniciando fetchTours...');
+        console.log('Starting fetchTours...');
         setLoading(true);
         const data = await tourService.getAllTours();
-        console.log('Tours recibidos:', data);
+        console.log('Tours received:', data);
         setTours(data);
         setError(null);
       } catch (err) {
-        console.error('Error en fetchTours:', err);
-        setError('Error al cargar los tours. Por favor, intente más tarde.');
+        console.error('Error in fetchTours:', err);
+        setError('Error loading tours. Please try again later.');
       } finally {
         setLoading(false);
       }
@@ -46,7 +46,7 @@ const Tours = () => {
     fetchTours();
   }, []);
 
-  // Lógica de filtrado mejorada
+  // Enhanced filtering logic
   const filteredTours = filter === "all" ? 
     tours : 
     tours.filter(tour => {
@@ -59,7 +59,7 @@ const Tours = () => {
       );
     });
 
-  console.log('Estado actual:', { 
+  console.log('Current state:', { 
     loading, 
     error, 
     toursLength: tours.length, 
@@ -120,7 +120,7 @@ const Tours = () => {
       <section className="container-custom section-padding">
         {loading ? (
           <div className="text-center py-12">
-            <p className="text-xl">Cargando tours...</p>
+            <p className="text-xl">Loading tours...</p>
           </div>
         ) : error ? (
           <div className="text-center py-12 text-red-600">

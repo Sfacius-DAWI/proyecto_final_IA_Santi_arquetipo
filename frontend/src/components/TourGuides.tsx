@@ -16,7 +16,7 @@ const TourGuides: React.FC<TourGuidesProps> = ({
   if (!guides || guides.length === 0) {
     return (
       <div className="text-center p-6 bg-gray-50 rounded-lg">
-        <p className="text-gray-500">No hay guías disponibles para este tour</p>
+        <p className="text-gray-500">No guides available for this tour</p>
       </div>
     );
   }
@@ -24,8 +24,8 @@ const TourGuides: React.FC<TourGuidesProps> = ({
   return (
     <div className="space-y-6">
       <div className="flex justify-between items-center">
-        <h2 className="text-2xl font-semibold">Guías Disponibles</h2>
-        <p className="text-sm text-gray-500">{guides.length} guías</p>
+        <h2 className="text-2xl font-semibold">Available Guides</h2>
+        <p className="text-sm text-gray-500">{guides.length} guides</p>
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">

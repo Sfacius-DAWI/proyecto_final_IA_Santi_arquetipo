@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
 import { ArrowLeft, ShoppingCart } from "lucide-react";
@@ -26,8 +25,8 @@ const Cart = () => {
       const cartReservations = reservationService.getCartReservations();
       setReservations(cartReservations);
     } catch (error) {
-      console.error('Error al cargar reservas:', error);
-      toast.error("Error al cargar las reservas del carrito");
+      console.error('Error loading reservations:', error);
+      toast.error("Error loading cart reservations");
     } finally {
       setLoading(false);
     }
@@ -37,9 +36,9 @@ const Cart = () => {
     try {
       reservationService.removeReservation(reservationId);
       setReservations(prev => prev.filter(item => item.id !== reservationId));
-      toast.success("Reserva eliminada del carrito");
+      toast.success("Reservation removed from cart");
     } catch (error) {
-      toast.error("Error al eliminar la reserva");
+      toast.error("Error removing reservation");
     }
   };
   
@@ -47,9 +46,9 @@ const Cart = () => {
     try {
       reservationService.clearCart();
       setReservations([]);
-      toast.success("Carrito vaciado");
+      toast.success("Cart cleared");
     } catch (error) {
-      toast.error("Error al vaciar el carrito");
+      toast.error("Error clearing cart");
     }
   };
   
@@ -58,7 +57,7 @@ const Cart = () => {
   };
 
   const formatCurrency = (amount: number) => {
-    return new Intl.NumberFormat('es-ES', {
+    return new Intl.NumberFormat('en-US', {
       style: 'currency',
       currency: 'USD'
     }).format(amount);
@@ -69,7 +68,7 @@ const Cart = () => {
       <div className="min-h-screen bg-gray-50 flex items-center justify-center">
         <div className="text-center">
           <ShoppingCart className="h-12 w-12 mx-auto text-gray-400 mb-4" />
-          <p className="text-gray-600">Cargando carrito...</p>
+          <p className="text-gray-600">Loading cart...</p>
         </div>
       </div>
     );
@@ -80,10 +79,10 @@ const Cart = () => {
       <div className="container-custom section-padding">
         <Link to="/tours" className="flex items-center text-primary hover:text-accent mb-8">
           <ArrowLeft className="mr-2 w-5 h-5" />
-          Volver a Tours
+          Back to Tours
         </Link>
         
-        <h1 className="heading-lg mb-8">Mis Reservas</h1>
+        <h1 className="heading-lg mb-8">My Reservations</h1>
         
         {reservations.length > 0 ? (
           <div className="flex flex-col lg:flex-row gap-8">
@@ -101,10 +100,10 @@ const Cart = () => {
               
               <div className="flex space-x-4">
                 <Link to="/tours" className="btn-outline">
-                  Continuar Explorando
+                  Continue Exploring
                 </Link>
                 <button className="btn-outline" onClick={handleClearCart}>
-                  Vaciar Carrito
+                  Clear Cart
                 </button>
               </div>
             </div>
@@ -112,7 +111,7 @@ const Cart = () => {
             {/* Order Summary */}
             <div className="lg:w-1/3">
               <div className="bg-white p-6 rounded-lg shadow-sm sticky top-4">
-                <h2 className="text-xl font-medium mb-6">Resumen del Pedido</h2>
+                <h2 className="text-xl font-medium mb-6">Order Summary</h2>
                 
                 <div className="space-y-4 mb-6">
                   <div className="flex justify-between">
@@ -120,7 +119,7 @@ const Cart = () => {
                     <span>{formatCurrency(calculateSubtotal())}</span>
                   </div>
                   <div className="flex justify-between">
-                    <span className="text-gray-600">Impuestos (10%)</span>
+                    <span className="text-gray-600">Taxes (10%)</span>
                     <span>{formatCurrency(calculateSubtotal() * 0.1)}</span>
                   </div>
                   <div className="border-t pt-4">
@@ -133,21 +132,21 @@ const Cart = () => {
                 
                 <div className="space-y-3 mb-6 text-sm text-gray-600">
                   <div className="flex justify-between">
-                    <span>Número de tours:</span>
+                    <span>Number of tours:</span>
                     <span>{reservations.length}</span>
                   </div>
                   <div className="flex justify-between">
-                    <span>Total de personas:</span>
+                    <span>Total people:</span>
                     <span>{reservations.reduce((total, r) => total + r.numberOfPeople, 0)}</span>
                   </div>
                 </div>
                 
                 <Link to="/checkout" className="btn-primary w-full text-center">
-                  Proceder al Pago
+                  Proceed to Payment
                 </Link>
                 
                 <p className="text-xs text-gray-500 mt-4 text-center">
-                  Podrás revisar todos los detalles antes de confirmar tu compra
+                  You can review all details before confirming your purchase
                 </p>
               </div>
             </div>
@@ -155,13 +154,13 @@ const Cart = () => {
         ) : (
           <div className="bg-white p-12 rounded-lg shadow-sm text-center">
             <ShoppingCart className="h-16 w-16 mx-auto text-gray-400 mb-4" />
-            <h2 className="text-xl font-medium mb-4">Tu carrito está vacío</h2>
+            <h2 className="text-xl font-medium mb-4">Your cart is empty</h2>
             <p className="text-gray-600 mb-6">
-              Parece que aún no has agregado ningún tour a tu carrito.
-              Comienza a explorar nuestros increíbles tours para encontrar tu próxima aventura.
+              It looks like you haven't added any tours to your cart yet.
+              Start exploring our amazing tours to find your next adventure.
             </p>
             <Link to="/tours" className="btn-primary">
-              Explorar Tours
+              Explore Tours
             </Link>
           </div>
         )}

@@ -1,0 +1,29 @@
+# Variables de Entorno para Producción
+# ⚠️ IMPORTANTE: Reemplaza estos valores con los de tu base de datos real
+# Renombra este archivo a .env y colócalo en la carpeta backend/
+
+# Base de Datos PostgreSQL de Producción
+DATABASE_URL="postgresql://usuario:password@tuservidor.postgres.database.azure.com:5432/tubasededatos?sslmode=require"
+
+# Configuración individual (opcional, pero recomendado para flexibilidad)
+POSTGRES_HOST="tuservidor.postgres.database.azure.com"
+POSTGRES_PORT="5432"
+POSTGRES_DB="tubasededatos"
+POSTGRES_USER="usuario"
+POSTGRES_PASSWORD="password"
+POSTGRES_SSL="true"
+
+# Node.js Configuration
+NODE_ENV="production"
+PORT="3000"
+
+# CORS Configuration - Reemplaza con tu dominio de frontend
+CORS_ORIGIN="https://tu-dominio-frontend.com"
+
+# API Configuration
+LOG_LEVEL="info"
+API_VERSION="v1"
+
+# OpenAI Configuration (si usas)
+OPENAI_API_KEY="sk-proj-tu-clave-aqui"
+ASSISTANT_OPENAI_ID="asst_tu-id-aqui" 

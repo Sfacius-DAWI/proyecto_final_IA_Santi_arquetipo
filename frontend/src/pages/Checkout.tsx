@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { toast } from "sonner";
@@ -47,14 +46,14 @@ const Checkout = () => {
     try {
       const cartReservations = reservationService.getCartReservations();
       if (cartReservations.length === 0) {
-        toast.error("No hay reservas en el carrito");
+        toast.error("No reservations in cart");
         navigate('/cart');
         return;
       }
       setReservations(cartReservations);
     } catch (error) {
-      console.error('Error al cargar reservas:', error);
-      toast.error("Error al cargar las reservas");
+      console.error('Error loading reservations:', error);
+      toast.error("Error loading reservations");
       navigate('/cart');
     } finally {
       setLoading(false);
@@ -66,7 +65,7 @@ const Checkout = () => {
   };
 
   const formatCurrency = (amount: number) => {
-    return new Intl.NumberFormat('es-ES', {
+    return new Intl.NumberFormat('en-US', {
       style: 'currency',
       currency: 'USD'
     }).format(amount);
@@ -87,7 +86,7 @@ const Checkout = () => {
     setIsSubmitting(true);
     
     try {
-      // Crear compras para cada reserva
+      // Create purchases for each reservation
       const purchasePromises = reservations.map(async (reservation) => {
         const purchaseData = {
           tourId: reservation.tourId,
@@ -101,14 +100,14 @@ const Checkout = () => {
 
       await Promise.all(purchasePromises);
       
-      // Limpiar el carrito después de la compra exitosa
+      // Clear cart after successful purchase
       reservationService.clearCart();
       
-      toast.success("¡Compra realizada exitosamente!");
+      toast.success("Purchase completed successfully!");
       navigate("/purchases");
     } catch (error) {
-      console.error('Error al procesar la compra:', error);
-      toast.error("Error al procesar la compra. Por favor, intenta de nuevo.");
+      console.error('Error processing purchase:', error);
+      toast.error("Error processing purchase. Please try again.");
     } finally {
       setIsSubmitting(false);
     }
@@ -118,7 +117,7 @@ const Checkout = () => {
     return (
       <div className="min-h-screen bg-gray-50 flex items-center justify-center">
         <div className="text-center">
-          <p className="text-gray-600">Cargando información de pago...</p>
+          <p className="text-gray-600">Loading payment information...</p>
         </div>
       </div>
     );
@@ -131,9 +130,9 @@ const Checkout = () => {
           <div className="flex flex-col md:flex-row gap-8">
             {/* Items Overview */}
             <div className="md:w-1/3">
-              <h2 className="heading-md mb-4">Resumen de Reservas</h2>
+              <h2 className="heading-md mb-4">Reservation Summary</h2>
               <p className="text-gray-600 mb-6">
-                Revisa tus reservas antes de proceder con el pago.
+                Review your reservations before proceeding with payment.
               </p>
               
               <div className="space-y-4 mb-6">
@@ -151,12 +150,12 @@ const Checkout = () => {
                         <h3 className="font-medium text-sm">{reservation.tourTitle}</h3>
                         <p className="text-xs text-gray-600">
                           {reservation.withGuide 
-                            ? `Con guía: ${reservation.guideName || 'Por asignar'}`
-                            : 'Sin guía'
+                            ? `With guide: ${reservation.guideName || 'To be assigned'}`
+                            : 'Without guide'
                           }
                         </p>
                         <p className="text-xs text-gray-600">
-                          Personas: {reservation.numberOfPeople}
+                          People: {reservation.numberOfPeople}
                         </p>
                         <p className="text-accent font-medium mt-2">
                           {formatCurrency(reservation.totalPrice)}
@@ -168,14 +167,14 @@ const Checkout = () => {
               </div>
               
               <div className="bg-white rounded-lg p-4 shadow-sm mb-6">
-                <h3 className="font-medium mb-3">Resumen del Pedido</h3>
+                <h3 className="font-medium mb-3">Order Summary</h3>
                 <div className="space-y-2 text-sm">
                   <div className="flex justify-between">
                     <span>Subtotal:</span>
                     <span>{formatCurrency(calculateSubtotal())}</span>
                   </div>
                   <div className="flex justify-between">
-                    <span>Impuestos (10%):</span>
+                    <span>Taxes (10%):</span>
                     <span>{formatCurrency(calculateSubtotal() * 0.1)}</span>
                   </div>
                   <div className="border-t pt-2 flex justify-between font-medium">
@@ -185,7 +184,7 @@ const Checkout = () => {
                 </div>
               </div>
               
-              <h3 className="font-medium mb-2">Opciones de Pago</h3>
+              <h3 className="font-medium mb-2">Payment Options</h3>
               <div className="bg-white rounded-lg overflow-hidden shadow-sm">
                 <div className="border-b p-4">
                   <label className="flex items-center">
@@ -197,7 +196,7 @@ const Checkout = () => {
                       onChange={handleRadioChange}
                       className="mr-2 h-4 w-4 text-primary"
                     />
-                    Tarjeta de Crédito
+                    Credit Card
                   </label>
                 </div>
                 <div className="p-4">
@@ -218,15 +217,15 @@ const Checkout = () => {
             
             {/* Payment Details */}
             <div className="md:w-2/3">
-              <h2 className="heading-md mb-4">Detalles de Pago</h2>
+              <h2 className="heading-md mb-4">Payment Details</h2>
               <p className="text-gray-600 mb-6">
-                Completa tus datos de pago para finalizar la compra.
+                Complete your payment details to finalize the purchase.
               </p>
               
               <form onSubmit={handleSubmit} className="space-y-6">
                 <div>
                   <label htmlFor="email" className="block text-sm font-medium text-gray-700 mb-1">
-                    Correo Electrónico
+                    Email Address
                   </label>
                   <input
                     id="email"
@@ -241,7 +240,7 @@ const Checkout = () => {
                 
                 <div>
                   <label htmlFor="fullName" className="block text-sm font-medium text-gray-700 mb-1">
-                    Nombre Completo
+                    Full Name
                   </label>
                   <input
                     id="fullName"
@@ -256,7 +255,7 @@ const Checkout = () => {
                 
                 <div>
                   <label htmlFor="address" className="block text-sm font-medium text-gray-700 mb-1">
-                    Dirección
+                    Address
                   </label>
                   <input
                     id="address"
@@ -271,7 +270,7 @@ const Checkout = () => {
                 
                 <div>
                   <label htmlFor="city" className="block text-sm font-medium text-gray-700 mb-1">
-                    Ciudad
+                    City
                   </label>
                   <input
                     id="city"
@@ -286,7 +285,7 @@ const Checkout = () => {
                 
                 <div>
                   <label htmlFor="zipCode" className="block text-sm font-medium text-gray-700 mb-1">
-                    Código Postal
+                    ZIP Code
                   </label>
                   <input
                     id="zipCode"
@@ -303,7 +302,7 @@ const Checkout = () => {
                   <div className="space-y-4">
                     <div>
                       <label htmlFor="cardNumber" className="block text-sm font-medium text-gray-700 mb-1">
-                        Número de Tarjeta
+                        Card Number
                       </label>
                       <input
                         id="cardNumber"
@@ -317,13 +316,13 @@ const Checkout = () => {
                     <div className="flex space-x-4">
                       <div className="w-1/2">
                         <label htmlFor="expiry" className="block text-sm font-medium text-gray-700 mb-1">
-                          Fecha de Vencimiento
+                          Expiry Date
                         </label>
                         <input
                           id="expiry"
                           name="expiry"
                           type="text"
-                          placeholder="MM/AA"
+                          placeholder="MM/YY"
                           className="w-full p-2 border rounded-md focus:outline-none focus:ring-1 focus:ring-primary"
                         />
                       </div>
@@ -349,7 +348,7 @@ const Checkout = () => {
                   className="w-full btn-primary"
                   disabled={isSubmitting}
                 >
-                  {isSubmitting ? "Procesando..." : "Finalizar Compra"}
+                  {isSubmitting ? "Processing..." : "Complete Purchase"}
                 </button>
               </form>
             </div>

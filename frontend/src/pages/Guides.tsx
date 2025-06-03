@@ -12,50 +12,26 @@ const promoMessages = [
 const guidesData: GuideType[] = [
   {
     id: 1,
-    name: "Bili Rodriguez",
-    image: IMAGES.guides.bili,
-    specialties: ["Nature Tours", "Mountain Hiking", "Wildlife"],
-    description: "An experienced guide with over 10 years of leading nature tours. Bili specializes in mountain hikes and wildlife spotting, with extensive knowledge of local ecosystems.",
+    name: "David Thompson",
+    image: IMAGES.guides.david,
+    specialties: ["History", "Architecture", "Cultural Heritage"],
+    description: "Professor of History specializing in cultural tours. David has a PhD in History and over 15 years of experience bringing historical sites to life with fascinating stories and detailed knowledge of ancient civilizations.",
     isAvailable: true
   },
   {
     id: 2,
-    name: "Maria Sanchez",
-    image: IMAGES.guides.maria,
-    specialties: ["City Tours", "Cultural Experiences", "History"],
-    description: "Maria is our cultural expert with a background in art history. Her city tours offer unique insights into local architecture, art, and traditions.",
+    name: "Helena Rodriguez",
+    image: IMAGES.guides.helena,
+    specialties: ["Biology", "Ecology", "Wildlife"],
+    description: "Professional biologist specializing in nature tours. Helena has extensive knowledge of local flora and fauna, with a Master's degree in Biology and passion for environmental conservation.",
     isAvailable: true
   },
   {
     id: 3,
-    name: "John Peterson",
-    image: IMAGES.guides.john,
-    specialties: ["Adventure Tours", "Coastal Explorations", "Photography"],
-    description: "With a passion for adventure and photography, John leads our most exciting tours. He knows all the best spots for capturing breathtaking landscapes.",
-    isAvailable: false
-  },
-  {
-    id: 4,
-    name: "Elena Kim",
-    image: IMAGES.guides.elena,
-    specialties: ["Food Tours", "Local Cuisine", "Culinary Traditions"],
-    description: "Elena is our food and culinary expert. Her tours take you on a journey through local gastronomy, introducing you to authentic flavors and cooking traditions.",
-    isAvailable: true
-  },
-  {
-    id: 5,
-    name: "Carlos Martinez",
-    image: IMAGES.guides.carlos,
-    specialties: ["Historical Sites", "Architecture", "Ancient Civilizations"],
-    description: "With a PhD in history, Carlos brings historical sites to life with fascinating stories and detailed knowledge of ancient civilizations and architectural styles.",
-    isAvailable: false
-  },
-  {
-    id: 6,
-    name: "Sophia Wong",
-    image: IMAGES.guides.sophia,
-    specialties: ["Nature Trails", "Botany", "Eco Tourism"],
-    description: "Sophia specializes in eco-friendly tours, focusing on sustainable travel and botany. She knows all about local plant species and their traditional uses.",
+    name: "Cristian Martinez",
+    image: IMAGES.guides.cristian,
+    specialties: ["Adventure Sports", "Hiking", "Quad Tours"],
+    description: "Professional hiker and adventure sports expert. Cristian has over 10 years of experience leading adventure tours and is certified in multiple extreme sports activities.",
     isAvailable: true
   }
 ];

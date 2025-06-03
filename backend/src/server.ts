@@ -1,8 +1,9 @@
-import Fastify, { FastifyInstance } from 'fastify';
+import Fastify from 'fastify';
 import cors from '@fastify/cors';
 import { routes } from './routes/index.js';
 import { initDatabase } from './config/database.js';
 import dotenv from 'dotenv';
+import { TypeBoxTypeProvider } from '@fastify/type-provider-typebox';
 
 // Cargar variables de entorno
 const envFile = process.env.NODE_ENV === 'production' ? '.env' : '.env.local';
@@ -16,8 +17,8 @@ const API_VERSION = process.env.API_VERSION || 'v1';
 const REQUEST_TIMEOUT = parseInt(process.env.REQUEST_TIMEOUT || '30000', 10);
 const CORS_ORIGIN = process.env.CORS_ORIGIN || '*';
 
-// Crear servidor Fastify
-const server: FastifyInstance = Fastify({
+// Crear servidor Fastify con soporte de TypeBox para tipado estricto
+const server = Fastify({
   logger: {
     level: LOG_LEVEL,
     transport: {
@@ -28,7 +29,7 @@ const server: FastifyInstance = Fastify({
       },
     },
   }
-});
+}).withTypeProvider<TypeBoxTypeProvider>();
 
 // Manejar señales de terminación para graceful shutdown
 function gracefulShutdown(signal: string) {

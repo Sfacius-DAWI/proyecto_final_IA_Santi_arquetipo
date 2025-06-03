@@ -19,7 +19,7 @@ const Register = () => {
     setLoading(true);
 
     if (password !== confirmPassword) {
-      toast.error("Las contraseñas no coinciden");
+      toast.error("Passwords do not match");
       setLoading(false);
       return;
     }
@@ -28,7 +28,7 @@ const Register = () => {
       await register(email, password);
       navigate("/dashboard");
     } catch (error) {
-      // Los errores ya se manejan en el contexto de autenticación
+      // Errors are already handled in the authentication context
     } finally {
       setLoading(false);
     }
@@ -38,7 +38,7 @@ const Register = () => {
     <div className="min-h-screen bg-gray-50">
       <div className="container-custom section-padding flex flex-col items-center">
         <div className="w-full max-w-md">
-          <h1 className="heading-lg text-center mb-8">Crear una cuenta nueva</h1>
+          <h1 className="heading-lg text-center mb-8">Create a new account</h1>
           
           <div className="bg-white p-8 rounded-lg shadow-sm">
             <form onSubmit={handleSubmit} className="space-y-6">
@@ -49,14 +49,14 @@ const Register = () => {
                   type="email"
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
-                  placeholder="tu@email.com"
+                  placeholder="your@email.com"
                   required
                   disabled={loading}
                 />
               </div>
               
               <div className="space-y-2">
-                <Label htmlFor="password">Contraseña</Label>
+                <Label htmlFor="password">Password</Label>
                 <Input
                   id="password"
                   type="password"
@@ -69,7 +69,7 @@ const Register = () => {
               </div>
 
               <div className="space-y-2">
-                <Label htmlFor="confirmPassword">Confirmar Contraseña</Label>
+                <Label htmlFor="confirmPassword">Confirm Password</Label>
                 <Input
                   id="confirmPassword"
                   type="password"
@@ -83,7 +83,7 @@ const Register = () => {
               
               <div className="space-y-3">
                 <Button type="submit" className="w-full btn-primary" disabled={loading}>
-                  {loading ? "Registrando..." : "Registrarse"}
+                  {loading ? "Registering..." : "Register"}
                 </Button>
                 
                 <div className="relative">
@@ -91,7 +91,7 @@ const Register = () => {
                     <span className="w-full border-t" />
                   </div>
                   <div className="relative flex justify-center text-xs uppercase">
-                    <span className="bg-white px-2 text-muted-foreground">O</span>
+                    <span className="bg-white px-2 text-muted-foreground">Or</span>
                   </div>
                 </div>
 
@@ -102,14 +102,14 @@ const Register = () => {
                   onClick={() => navigate('/login')}
                   disabled={loading}
                 >
-                  Iniciar sesión con cuenta existente
+                  Sign in with existing account
                 </Button>
               </div>
               
               <p className="text-center text-sm text-gray-600">
-                ¿Ya tienes una cuenta?{" "}
+                Already have an account?{" "}
                 <Link to="/login" className="text-primary hover:text-accent font-medium">
-                  Inicia sesión aquí
+                  Sign in here
                 </Link>
               </p>
             </form>

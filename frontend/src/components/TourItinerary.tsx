@@ -12,9 +12,9 @@ const TourItinerary: React.FC<TourItineraryProps> = ({ itinerary }) => {
 
   return (
     <div className="space-y-6">
-      <h2 className="text-2xl font-semibold">Itinerario del Tour</h2>
+      <h2 className="text-2xl font-semibold">Tour Itinerary</h2>
       <p className="text-gray-600">
-        Descubre día a día las actividades que realizarás durante este tour. Cada día está diseñado para brindarte una experiencia inolvidable.
+        Discover day by day the activities you'll do during this tour. Each day is designed to give you an unforgettable experience.
       </p>
 
       <Accordion 
@@ -41,12 +41,12 @@ const TourItinerary: React.FC<TourItineraryProps> = ({ itinerary }) => {
                 {day.duration && (
                   <div className="flex items-center text-gray-600">
                     <Clock className="w-4 h-4 mr-2" />
-                    <span>Duración: {day.duration}</span>
+                    <span>Duration: {day.duration}</span>
                   </div>
                 )}
 
                 <div className="space-y-2">
-                  <h4 className="font-medium">Actividades:</h4>
+                  <h4 className="font-medium">Activities:</h4>
                   <ul className="space-y-2">
                     {day.activities.map((activity, index) => (
                       <li key={index} className="flex items-start">
@@ -64,7 +64,7 @@ const TourItinerary: React.FC<TourItineraryProps> = ({ itinerary }) => {
 
       {itinerary.length === 0 && (
         <div className="text-center py-8 border rounded-lg bg-gray-50">
-          <p className="text-gray-500">No hay información de itinerario disponible para este tour.</p>
+          <p className="text-gray-500">No itinerary information available for this tour.</p>
         </div>
       )}
     </div>
