@@ -1,11 +1,14 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { Send, MessageCircle, X, Loader2, Bot, User } from 'lucide-react';
+import { Send, MessageCircle, X, Loader2, Bot, User, LogIn } from 'lucide-react';
 import { Button } from './ui/button';
 import { Input } from './ui/input';
 import { Card } from './ui/card';
 import { ScrollArea } from './ui/scroll-area';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from './ui/dialog';
+import { Label } from './ui/label';
 import api from '../services/api';
 import { useToast } from './ui/use-toast';
+import { useAuthSafe } from '@/hooks/useAuthSafe';
 import { DynamicForm } from './DynamicForm';
 
 interface Message {
@@ -22,6 +25,7 @@ interface Message {
       action: string;
     };
   };
+  requiresAuth?: boolean;
 }
 
 const Chatbot: React.FC = () => {
@@ -39,6 +43,14 @@ const Chatbot: React.FC = () => {
   const [sessionId] = useState(`session_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`);
   const scrollAreaRef = useRef<HTMLDivElement>(null);
   const { toast } = useToast();
+  
+  // Estados para autenticación
+  const { currentUser, login, loginWithGoogle } = useAuthSafe();
+  const [showLoginModal, setShowLoginModal] = useState(false);
+  const [loginEmail, setLoginEmail] = useState('');
+  const [loginPassword, setLoginPassword] = useState('');
+  const [loginLoading, setLoginLoading] = useState(false);
+  const [pendingFormData, setPendingFormData] = useState<any>(null);
 
   // Auto-scroll cuando hay nuevos mensajes
   useEffect(() => {
@@ -62,7 +74,7 @@ const Chatbot: React.FC = () => {
 
     // Agregar mensaje del usuario
     setMessages((prev) => [...prev, userMessage]);
-    const currentInput = inputMessage; // Guardar el input actual antes de limpiarlo
+    const currentInput = inputMessage;
     setInputMessage('');
     setIsLoading(true);
 
@@ -86,13 +98,11 @@ const Chatbot: React.FC = () => {
       const response = await api.post('/api/ai/chat', {
         sessionId,
         prompt: currentInput,
-        // No enviamos userId, el backend lo manejará como guest
         timestamp: new Date().toISOString(),
       });
 
       console.log('💬 Respuesta del chatbot recibida:', response.data);
 
-      // Verificar el tipo de respuesta
       const aiResponse = response.data;
       
       // Remover mensaje de carga y agregar respuesta real
@@ -100,7 +110,7 @@ const Chatbot: React.FC = () => {
         const filtered = prev.filter((msg) => !msg.isLoading);
         
         if (aiResponse.type === 'form') {
-          // Si es un formulario, agregar el mensaje con el formulario
+          // Si es un formulario, marcarlo como que requiere autenticación
           return [
             ...filtered,
             {
@@ -109,10 +119,10 @@ const Chatbot: React.FC = () => {
               role: 'assistant',
               timestamp: new Date(),
               form: aiResponse.form,
+              requiresAuth: true,
             },
           ];
         } else {
-          // Si es texto normal
           return [
             ...filtered,
             {
@@ -132,10 +142,8 @@ const Chatbot: React.FC = () => {
         config: error.config
       });
       
-      // Remover mensaje de carga
       setMessages((prev) => prev.filter((msg) => !msg.isLoading));
       
-      // Agregar mensaje de error más específico
       setMessages((prev) => [...prev, {
         id: Date.now().toString(),
         content: `Error de conexión: ${error.message}. Por favor verifica que el servidor esté funcionando.`,
@@ -160,15 +168,72 @@ const Chatbot: React.FC = () => {
     }
   };
 
-  // Función para manejar el envío del formulario
-  const handleFormSubmit = async (data: any) => {
+  // Manejo del login
+  const handleLogin = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setLoginLoading(true);
+    
+    try {
+      await login(loginEmail, loginPassword);
+      setShowLoginModal(false);
+      setLoginEmail('');
+      setLoginPassword('');
+      
+      // Si había datos de formulario pendientes, procesarlos
+      if (pendingFormData) {
+        await handleFormSubmitAuthenticated(pendingFormData);
+        setPendingFormData(null);
+      }
+      
+      toast({
+        title: 'Inicio de sesión exitoso',
+        description: 'Ahora puedes continuar con tu reserva.',
+      });
+    } catch (error) {
+      // El error ya se maneja en el contexto de auth
+    } finally {
+      setLoginLoading(false);
+    }
+  };
+
+  const handleGoogleLogin = async () => {
+    setLoginLoading(true);
+    
+    try {
+      await loginWithGoogle();
+      setShowLoginModal(false);
+      
+      if (pendingFormData) {
+        await handleFormSubmitAuthenticated(pendingFormData);
+        setPendingFormData(null);
+      }
+      
+      toast({
+        title: 'Inicio de sesión exitoso',
+        description: 'Ahora puedes continuar con tu reserva.',
+      });
+    } catch (error) {
+      // El error ya se maneja en el contexto de auth
+    } finally {
+      setLoginLoading(false);
+    }
+  };
+
+  // Función para manejar el envío del formulario con autenticación
+  const handleFormSubmitAuthenticated = async (data: any) => {
     try {
       console.log('📋 Datos del formulario recibidos:', data);
 
-      // Mapear los campos del formulario a los esperados por el backend
+      if (!currentUser) {
+        throw new Error('Usuario no autenticado');
+      }
+
+      // Obtener token de autenticación
+      const token = await currentUser.getIdToken();
+
       const bookingData = {
         tourName: data.tourName,
-        userEmail: data.email,
+        userEmail: currentUser.email || data.email,
         userName: data.fullName,
         phoneNumber: data.phone,
         numberOfPeople: Number(data.numberOfPeople),
@@ -179,13 +244,17 @@ const Chatbot: React.FC = () => {
 
       console.log('📤 Datos a enviar al backend:', bookingData);
 
-      // Enviar los datos del formulario al backend
-      const response = await api.post('/api/ai/booking', bookingData);
+      // Enviar con token de autenticación
+      const response = await api.post('/api/ai/booking', bookingData, {
+        headers: {
+          Authorization: `Bearer ${token}`
+        }
+      });
 
       // Agregar mensaje de confirmación
       setMessages(prev => [...prev, {
         id: Date.now().toString(),
-        content: response.data.message || '¡Gracias! Tu reserva ha sido procesada exitosamente. Te enviaremos un correo de confirmación pronto.',
+        content: response.data.message || '¡Gracias! Tu reserva ha sido procesada exitosamente. Te enviaremos un correo de confirmación pronto. Puedes ver tus reservas en la sección "Mis Compras".',
         role: 'assistant',
         timestamp: new Date(),
       }]);
@@ -209,8 +278,109 @@ const Chatbot: React.FC = () => {
     }
   };
 
+  // Función que maneja el envío del formulario (verifica autenticación primero)
+  const handleFormSubmit = async (data: any) => {
+    if (!currentUser) {
+      // Guardar los datos del formulario y mostrar modal de login
+      setPendingFormData(data);
+      setShowLoginModal(true);
+      
+      // Agregar mensaje informativo
+      setMessages(prev => [...prev, {
+        id: Date.now().toString(),
+        content: 'Para completar tu reserva, necesitas iniciar sesión o crear una cuenta. Esto te permitirá ver y gestionar tus reservas desde tu cuenta.',
+        role: 'assistant',
+        timestamp: new Date(),
+      }]);
+      
+      return;
+    }
+
+    // Si ya está autenticado, procesar directamente
+    await handleFormSubmitAuthenticated(data);
+  };
+
   return (
     <>
+      {/* Modal de Login */}
+      <Dialog open={showLoginModal} onOpenChange={setShowLoginModal}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <LogIn className="w-5 h-5" />
+              Iniciar Sesión
+            </DialogTitle>
+            <DialogDescription>
+              Inicia sesión para completar tu reserva y gestionar tus tours.
+            </DialogDescription>
+          </DialogHeader>
+          
+          <form onSubmit={handleLogin} className="space-y-4">
+            <div className="space-y-2">
+              <Label htmlFor="login-email">Email</Label>
+              <Input
+                id="login-email"
+                type="email"
+                value={loginEmail}
+                onChange={(e) => setLoginEmail(e.target.value)}
+                placeholder="tu@email.com"
+                required
+                disabled={loginLoading}
+              />
+            </div>
+            
+            <div className="space-y-2">
+              <Label htmlFor="login-password">Contraseña</Label>
+              <Input
+                id="login-password"
+                type="password"
+                value={loginPassword}
+                onChange={(e) => setLoginPassword(e.target.value)}
+                placeholder="••••••••"
+                required
+                disabled={loginLoading}
+              />
+            </div>
+            
+            <div className="flex flex-col gap-2">
+              <Button type="submit" disabled={loginLoading} className="w-full">
+                {loginLoading ? (
+                  <>
+                    <Loader2 className="w-4 h-4 animate-spin mr-2" />
+                    Iniciando sesión...
+                  </>
+                ) : (
+                  'Iniciar Sesión'
+                )}
+              </Button>
+              
+              <Button
+                type="button"
+                variant="outline"
+                onClick={handleGoogleLogin}
+                disabled={loginLoading}
+                className="w-full"
+              >
+                Continuar con Google
+              </Button>
+              
+              <Button
+                type="button"
+                variant="ghost"
+                onClick={() => {
+                  setShowLoginModal(false);
+                  setPendingFormData(null);
+                }}
+                disabled={loginLoading}
+                className="w-full"
+              >
+                Cancelar
+              </Button>
+            </div>
+          </form>
+        </DialogContent>
+      </Dialog>
+
       {/* Botón flotante del chatbot */}
       <div className="fixed bottom-6 right-6 z-50">
         {!isOpen && (
@@ -235,7 +405,9 @@ const Chatbot: React.FC = () => {
               </div>
               <div>
                 <h3 className="font-semibold">Asistente Virtual</h3>
-                <p className="text-xs opacity-90">En línea</p>
+                <p className="text-xs opacity-90">
+                  {currentUser ? `Hola, ${currentUser.email}` : 'En línea'}
+                </p>
               </div>
             </div>
             <Button
@@ -305,13 +477,24 @@ const Chatbot: React.FC = () => {
                messages[messages.length - 1].role === 'assistant' && 
                messages[messages.length - 1].form && (
                 <div className="mt-4">
+                  {/* Mostrar información de autenticación si se requiere */}
+                  {messages[messages.length - 1].requiresAuth && !currentUser && (
+                    <div className="mb-4 p-3 bg-blue-50 border-l-4 border-blue-400 rounded">
+                      <div className="flex items-center">
+                        <LogIn className="w-4 h-4 text-blue-600 mr-2" />
+                        <p className="text-sm text-blue-800">
+                          Necesitas iniciar sesión para hacer una reserva
+                        </p>
+                      </div>
+                    </div>
+                  )}
+                  
                   <DynamicForm
                     title={messages[messages.length - 1].form!.title}
                     fields={messages[messages.length - 1].form!.fields}
                     submitButton={messages[messages.length - 1].form!.submitButton}
                     onSubmit={handleFormSubmit}
                     onCancel={() => {
-                      // Agregar mensaje de cancelación
                       setMessages(prev => [...prev, {
                         id: Date.now().toString(),
                         content: 'Has cancelado el formulario. ¿En qué más puedo ayudarte?',
@@ -351,6 +534,9 @@ const Chatbot: React.FC = () => {
             </div>
             <p className="text-xs text-muted-foreground mt-2 text-center">
               Asistente de reservas
+              {currentUser && (
+                <span className="text-primary"> • Conectado como {currentUser.email}</span>
+              )}
             </p>
           </div>
         </Card>

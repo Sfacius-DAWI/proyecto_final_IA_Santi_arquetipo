@@ -35,7 +35,7 @@ const PurchaseHistory = ({ onSelectPurchase }: PurchaseHistoryProps) => {
         setPurchases(data);
         setFilteredPurchases(data);
       } catch (err) {
-        setError("Error al cargar las compras");
+        setError("Error loading purchases");
         console.error(err);
       } finally {
         setLoading(false);
@@ -48,7 +48,7 @@ const PurchaseHistory = ({ onSelectPurchase }: PurchaseHistoryProps) => {
   useEffect(() => {
     let result = purchases;
     
-    // Filtrar por término de búsqueda
+    // Filter by search term
     if (searchTerm) {
       const term = searchTerm.toLowerCase();
       result = result.filter(purchase => 
@@ -56,7 +56,7 @@ const PurchaseHistory = ({ onSelectPurchase }: PurchaseHistoryProps) => {
       );
     }
     
-    // Filtrar por estado
+    // Filter by status
     if (statusFilter !== "all") {
       result = result.filter(purchase => purchase.estado === statusFilter);
     }
@@ -67,15 +67,15 @@ const PurchaseHistory = ({ onSelectPurchase }: PurchaseHistoryProps) => {
   const getStatusBadge = (status: string) => {
     switch (status) {
       case 'COMPLETADO':
-        return <Badge className="bg-green-500">Completado</Badge>;
+        return <Badge className="bg-green-500">Completed</Badge>;
       case 'PENDIENTE':
-        return <Badge className="bg-yellow-500">Pendiente</Badge>;
+        return <Badge className="bg-yellow-500">Pending</Badge>;
       case 'FALLIDO':
-        return <Badge className="bg-red-500">Fallido</Badge>;
+        return <Badge className="bg-red-500">Failed</Badge>;
       case 'REEMBOLSADO':
-        return <Badge className="bg-blue-500">Reembolsado</Badge>;
+        return <Badge className="bg-blue-500">Refunded</Badge>;
       case 'CANCELADO':
-        return <Badge className="bg-gray-500">Cancelado</Badge>;
+        return <Badge className="bg-gray-500">Cancelled</Badge>;
       default:
         return <Badge>{status}</Badge>;
     }
@@ -100,12 +100,12 @@ const PurchaseHistory = ({ onSelectPurchase }: PurchaseHistoryProps) => {
   return (
     <Card className="w-full">
       <CardHeader>
-        <CardTitle className="text-2xl font-playfair">Tus Compras</CardTitle>
+        <CardTitle className="text-2xl font-playfair">Your Purchases</CardTitle>
         <div className="flex flex-col sm:flex-row gap-4 mt-4">
           <div className="relative flex-1">
             <Search className="absolute left-2 top-2.5 h-4 w-4 text-muted-foreground" />
             <Input
-              placeholder="Buscar por nombre de tour..."
+              placeholder="Search by tour name..."
               className="pl-8"
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
@@ -116,16 +116,16 @@ const PurchaseHistory = ({ onSelectPurchase }: PurchaseHistoryProps) => {
               <SelectTrigger>
                 <div className="flex items-center">
                   <Filter className="h-4 w-4 mr-2" />
-                  <SelectValue placeholder="Filtrar por estado" />
+                  <SelectValue placeholder="Filter by status" />
                 </div>
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="all">Todos los estados</SelectItem>
-                <SelectItem value="PENDIENTE">Pendiente</SelectItem>
-                <SelectItem value="COMPLETADO">Completado</SelectItem>
-                <SelectItem value="FALLIDO">Fallido</SelectItem>
-                <SelectItem value="REEMBOLSADO">Reembolsado</SelectItem>
-                <SelectItem value="CANCELADO">Cancelado</SelectItem>
+                <SelectItem value="all">All statuses</SelectItem>
+                <SelectItem value="PENDIENTE">Pending</SelectItem>
+                <SelectItem value="COMPLETADO">Completed</SelectItem>
+                <SelectItem value="FALLIDO">Failed</SelectItem>
+                <SelectItem value="REEMBOLSADO">Refunded</SelectItem>
+                <SelectItem value="CANCELADO">Cancelled</SelectItem>
               </SelectContent>
             </Select>
           </div>
@@ -137,8 +137,8 @@ const PurchaseHistory = ({ onSelectPurchase }: PurchaseHistoryProps) => {
           <div className="text-center py-8">
             <p className="text-muted-foreground mb-2">
               {purchases.length === 0 
-                ? "No has realizado ninguna compra todavía" 
-                : "No se encontraron compras con los filtros seleccionados"}
+                ? "You haven't made any purchases yet" 
+                : "No purchases found with the selected filters"}
             </p>
             {purchases.length > 0 && (
               <Button 
@@ -148,7 +148,7 @@ const PurchaseHistory = ({ onSelectPurchase }: PurchaseHistoryProps) => {
                   setStatusFilter("all");
                 }}
               >
-                Borrar filtros
+                Clear filters
               </Button>
             )}
           </div>
@@ -157,12 +157,12 @@ const PurchaseHistory = ({ onSelectPurchase }: PurchaseHistoryProps) => {
             <Table>
               <TableHeader>
                 <TableRow>
-                  <TableHead>Fecha</TableHead>
+                  <TableHead>Date</TableHead>
                   <TableHead>Tour</TableHead>
-                  <TableHead>Personas</TableHead>
+                  <TableHead>People</TableHead>
                   <TableHead>Total</TableHead>
-                  <TableHead>Estado</TableHead>
-                  <TableHead className="text-right">Acciones</TableHead>
+                  <TableHead>Status</TableHead>
+                  <TableHead className="text-right">Actions</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
@@ -180,7 +180,7 @@ const PurchaseHistory = ({ onSelectPurchase }: PurchaseHistoryProps) => {
                         onClick={() => onSelectPurchase(purchase.id)}
                       >
                         <EyeIcon className="h-4 w-4 mr-1" />
-                        <span>Ver detalles</span>
+                        <span>View details</span>
                       </Button>
                     </TableCell>
                   </TableRow>

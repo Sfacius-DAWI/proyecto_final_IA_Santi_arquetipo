@@ -7,7 +7,6 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '.
 import { Card, CardHeader, CardTitle, CardContent, CardFooter } from './ui/card';
 import { Loader2 } from 'lucide-react';
 import { useToast } from './ui/use-toast';
-import api from '../services/api';
 
 interface FormField {
   name: string;
@@ -73,37 +72,18 @@ export const DynamicForm: React.FC<DynamicFormProps> = ({
     setIsSubmitting(true);
     
     try {
-      // Enviar los datos al backend
-      if (submitButton.action === 'submit_booking') {
-        const response = await api.post('/api/ai/booking', {
-          tourName: formData.tourName,
-          userEmail: formData.email,
-          userName: formData.fullName,
-          phoneNumber: formData.phone,
-          numberOfPeople: parseInt(formData.numberOfPeople),
-          preferredDate: formData.preferredDate,
-          paymentMethod: formData.paymentMethod,
-          specialRequests: formData.specialRequests || ''
-        });
-
-        if (response.data.success) {
-          toast({
-            title: '¡Reserva confirmada!',
-            description: response.data.message || 'Te hemos enviado un correo con los detalles de tu reserva.',
-          });
-          
-          if (onSubmit) {
-            onSubmit({ ...formData, bookingId: response.data.bookingId });
-          }
-        } else {
-          throw new Error(response.data.error || 'Error al procesar la reserva');
-        }
+      // SIEMPRE usar la función onSubmit del padre (Chatbot)
+      // El padre se encarga de la autenticación y la petición al API
+      if (onSubmit) {
+        await onSubmit(formData);
+      } else {
+        throw new Error('No se ha definido una función de envío');
       }
     } catch (error: any) {
       console.error('Error al enviar formulario:', error);
       toast({
         title: 'Error',
-        description: error.response?.data?.error || error.message || 'No se pudo procesar tu reserva. Por favor intenta nuevamente.',
+        description: error.message || 'No se pudo procesar tu solicitud. Por favor intenta nuevamente.',
         variant: 'destructive',
       });
     } finally {

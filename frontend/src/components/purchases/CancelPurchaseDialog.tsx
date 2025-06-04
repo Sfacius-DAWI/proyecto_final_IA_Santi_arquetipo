@@ -30,7 +30,7 @@ const CancelPurchaseDialog = ({ purchase, onClose, onSuccess }: CancelPurchaseDi
       const canceledPurchase = await purchaseService.cancelPurchase(purchase.id);
       onSuccess(canceledPurchase);
     } catch (err) {
-      setError("Error al cancelar la reserva");
+      setError("Error cancelling booking");
       console.error(err);
     } finally {
       setLoading(false);
@@ -41,19 +41,19 @@ const CancelPurchaseDialog = ({ purchase, onClose, onSuccess }: CancelPurchaseDi
     <Dialog open={true} onOpenChange={onClose}>
       <DialogContent>
         <DialogHeader>
-          <DialogTitle>Cancelar Reserva</DialogTitle>
+          <DialogTitle>Cancel Booking</DialogTitle>
           <DialogDescription>
-            ¿Estás seguro que deseas cancelar tu reserva de {purchase.tour.titulo}?
+            Are you sure you want to cancel your booking for {purchase.tour.titulo}?
           </DialogDescription>
         </DialogHeader>
         
         <div className="py-4">
           <div className="rounded-md bg-destructive/10 p-4 mb-4">
-            <p className="text-sm text-destructive font-medium">Información importante:</p>
+            <p className="text-sm text-destructive font-medium">Important information:</p>
             <ul className="text-sm text-destructive mt-2 list-disc list-inside space-y-1">
-              <li>Esta acción no se puede deshacer</li>
-              <li>Recibirás un reembolso según nuestra política de cancelación</li>
-              <li>El monto a reembolsar será de {formatCurrency(purchase.precioTotal * 0.8)}</li>
+              <li>This action cannot be undone</li>
+              <li>You will receive a refund according to our cancellation policy</li>
+              <li>The refund amount will be {formatCurrency(purchase.precioTotal * 0.8)}</li>
             </ul>
           </div>
           
@@ -64,7 +64,7 @@ const CancelPurchaseDialog = ({ purchase, onClose, onSuccess }: CancelPurchaseDi
         
         <DialogFooter>
           <Button type="button" variant="outline" onClick={onClose} disabled={loading}>
-            Volver
+            Back
           </Button>
           <Button 
             type="button" 
@@ -73,7 +73,7 @@ const CancelPurchaseDialog = ({ purchase, onClose, onSuccess }: CancelPurchaseDi
             disabled={loading}
           >
             {loading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-            Confirmar Cancelación
+            Confirm Cancellation
           </Button>
         </DialogFooter>
       </DialogContent>

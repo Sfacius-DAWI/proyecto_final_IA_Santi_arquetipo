@@ -1,4 +1,4 @@
-import { postconversationService } from './services/ava-openai/index.js';
+import { postconversationService } from './services/santi-openai/index.js';
 import dotenv from 'dotenv';
 
 // Cargar variables de entorno

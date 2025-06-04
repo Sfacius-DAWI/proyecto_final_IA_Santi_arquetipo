@@ -1,5 +1,5 @@
 import axios from 'axios';
-import { postconversationService } from './services/ava-openai/index.js';
+import { postconversationService } from './services/santi-openai/index.js';
 
 const API_BASE_URL = 'http://localhost:3003';
 

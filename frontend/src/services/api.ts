@@ -21,17 +21,15 @@ const api = axios.create({
   headers: {
     'Content-Type': 'application/json',
   },
-  timeout: 15000, // 15 segundos de timeout
   withCredentials: false, // Deshabilitar credenciales por ahora
 });
 
 // Interceptor para debug de peticiones
 api.interceptors.request.use(
   (config) => {
-    const fullUrl = `${config.baseURL}${config.url}`;
     console.log('🚀 Enviando petición:', {
       method: config.method?.toUpperCase(),
-      url: fullUrl,
+      url: `${config.baseURL}${config.url}`,
       data: config.data
     });
     return config;
@@ -54,7 +52,6 @@ api.interceptors.response.use(
   },
   (error) => {
     if (error.response) {
-      // El servidor respondió con un código de error
       console.error('❌ Error de servidor:', {
         status: error.response.status,
         statusText: error.response.statusText,
@@ -62,14 +59,12 @@ api.interceptors.response.use(
         data: error.response.data
       });
     } else if (error.request) {
-      // La petición fue hecha pero no se recibió respuesta
       console.error('❌ Error de conexión:', {
         message: error.message,
         url: error.config?.url,
         baseURL: error.config?.baseURL
       });
     } else {
-      // Error en la configuración de la petición
       console.error('❌ Error de configuración:', error.message);
     }
     return Promise.reject(error);

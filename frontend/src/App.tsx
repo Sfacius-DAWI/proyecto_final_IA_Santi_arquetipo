@@ -104,8 +104,8 @@ const App = () => (
           <BrowserRouter>
             <AppRoutes />
           </BrowserRouter>
+          <Chatbot />
         </AuthProvider>
-        <Chatbot />
       </TooltipProvider>
     </QueryClientProvider>
   </ErrorBoundary>

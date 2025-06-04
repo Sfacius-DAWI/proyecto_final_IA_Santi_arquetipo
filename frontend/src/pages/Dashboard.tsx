@@ -40,7 +40,7 @@ const Dashboard = () => {
               onClick={() => navigate('/purchases')}
               variant="outline"
             >
-              Ver mis compras
+              View My Purchases
             </Button>
             
             <Button 

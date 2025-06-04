@@ -176,10 +176,92 @@ export const postconversationService = async(chatrequest: ChatInterface): Promis
     const run = await runThread(assistant, thread);
     const RunId = run.id;
     const runStatus = await statusThread(thread, RunId);
+    
+    // Verificar si el run falló
+    if (runStatus.status === 'failed') {
+      console.error('OpenAI run failed:', {
+        runId: RunId,
+        threadId: thread,
+        lastError: runStatus.last_error
+      });
+      
+      // Manejo específico para límite de cuota
+      if (runStatus.last_error?.code === 'rate_limit_exceeded') {
+        return {
+          type: 'text',
+          content: 'Lo siento, hemos alcanzado el límite de consultas por hoy. Por favor intenta más tarde o contáctanos para obtener ayuda inmediata. Mientras tanto, puedo ayudarte con reservas - solo dime qué tour te interesa.',
+          actionResult: {
+            success: false,
+            error: 'OpenAI quota exceeded'
+          }
+        };
+      }
+      
+      return {
+        type: 'text',
+        content: 'Lo siento, hubo un problema técnico procesando tu consulta. Por favor intenta reformular tu pregunta o contáctanos directamente.',
+        actionResult: {
+          success: false,
+          error: `Run failed: ${runStatus.last_error?.message || 'Unknown error'}`
+        }
+      };
+    }
+    
+    // Verificar otros estados problemáticos
+    if (runStatus.status === 'cancelled') {
+      console.warn('OpenAI run was cancelled:', RunId);
+      return {
+        type: 'text',
+        content: 'La consulta fue cancelada. Por favor intenta nuevamente.',
+        actionResult: {
+          success: false,
+          error: 'Run was cancelled'
+        }
+      };
+    }
+    
+    if (runStatus.status === 'expired') {
+      console.warn('OpenAI run expired:', RunId);
+      return {
+        type: 'text',
+        content: 'La consulta tardó demasiado tiempo en procesarse. Por favor intenta con una pregunta más simple.',
+        actionResult: {
+          success: false,
+          error: 'Run expired'
+        }
+      };
+    }
+
     const tokensUsage = runStatus.usage;
     const messages = await getMessage(thread);
 
-    const firstContentBlock: any = messages.data[0].content[0];
+    // Debug logging para ver los mensajes
+    console.log('Total messages:', messages.data.length);
+    console.log('Run status final:', runStatus.status);
+    messages.data.forEach((msg, index) => {
+      console.log(`Message ${index}: role=${msg.role}, content=${(msg.content[0] as any)?.text?.value?.substring(0, 100)}...`);
+    });
+
+    // Buscar el mensaje del asistente
+    const assistantMessage = messages.data.find(msg => msg.role === 'assistant');
+    if (!assistantMessage) {
+      console.error('No assistant message found after successful run', {
+        runStatus: runStatus.status,
+        totalMessages: messages.data.length,
+        messageRoles: messages.data.map(m => m.role)
+      });
+      
+      return {
+        type: 'text',
+        content: 'Lo siento, no pude generar una respuesta adecuada. Por favor intenta reformular tu pregunta.',
+        actionResult: {
+          success: false,
+          error: 'No assistant response found'
+        }
+      };
+    }
+
+    const firstContentBlock: any = assistantMessage.content[0];
     let doc;
     if (firstContentBlock?.text?.annotations?.[0] !== undefined) {
       doc = await retrieveFile(firstContentBlock.text.annotations[0].file_citation.file_id);
@@ -194,7 +276,7 @@ export const postconversationService = async(chatrequest: ChatInterface): Promis
 
     return {
       type: 'text',
-      content: (messages.data[0].content[0] as any).text?.value ?? '',
+      content: firstContentBlock?.text?.value ?? '',
       tokensUsage: tokensUsage?.total_tokens ?? 0,
       DOC: doc === undefined ? 'no hay documentos de referencia' : doc.filename
     };

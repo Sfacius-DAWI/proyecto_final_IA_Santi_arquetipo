@@ -1,6 +1,6 @@
 import { FastifyInstance, FastifyRequest, FastifyReply } from 'fastify';
 import { Static } from '@sinclair/typebox';
-import { postconversationService } from '../../../services/ava-openai/index.js';
+import { postconversationService } from '../../../services/santi-openai/index.js';
 import { ChatInterface, AIResponse } from '../../../types/general-AI-request.interface.js';
 // Importar el schema completo del endpoint y el schema del body para inferir el tipo
 import { AIChatEndpointSchema, ChatRequestSchema } from './schemas/ai.schema.js';

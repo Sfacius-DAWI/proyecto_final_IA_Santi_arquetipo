@@ -4,9 +4,14 @@ const prisma = new PrismaClient();
 
 export const createPurchase = async (data: Prisma.CompraCreateInput): Promise<Compra> => {
   try {
+    const tourId = data.tour?.connect?.id;
+    if (!tourId) {
+      throw new Error('Tour ID es requerido');
+    }
+
     const tour = await prisma.tour.findUnique({
-      where: { id: data.tour?.connect?.id }, // Se añade optional chaining por si no viene tour conectado
-      select: { disponible: true, precio: true }
+      where: { id: tourId },
+      select: { disponible: true, precio: true, titulo: true }
     });
 
     if (!tour) {
@@ -27,10 +32,10 @@ export const createPurchase = async (data: Prisma.CompraCreateInput): Promise<Co
 
     const precioCalculado = Number(tour.precio) * cantidad;
     if (Math.abs(precioCalculado - precioTotal) > 0.01) {
-      throw new Error('El precio total no coincide con el cálculo esperado');
+      throw new Error(`El precio total (${precioTotal}) no coincide con el cálculo esperado (${precioCalculado})`);
     }
 
-    return await prisma.compra.create({
+    const compra = await prisma.compra.create({
       data,
       include: {
         tour: {
@@ -42,6 +47,8 @@ export const createPurchase = async (data: Prisma.CompraCreateInput): Promise<Co
         }
       }
     });
+
+    return compra;
   } catch (error) {
     console.error('Error al crear la compra:', error);
     throw error;

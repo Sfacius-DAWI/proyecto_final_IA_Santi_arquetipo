@@ -12,7 +12,7 @@ import { Label } from "@/components/ui/label";
 import { Calendar } from "@/components/ui/calendar";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { format } from "date-fns";
-import { es } from "date-fns/locale";
+import { enUS } from "date-fns/locale";
 import { cn } from "@/lib/utils";
 import { CalendarIcon, Loader2 } from "lucide-react";
 import { purchaseService, PurchaseDetails, PurchaseUpdateData } from "@/services/purchaseService";
@@ -35,7 +35,7 @@ const EditPurchaseDialog = ({ purchase, onClose, onSuccess }: EditPurchaseDialog
     e.preventDefault();
     
     if (cantidad < 1) {
-      setError("La cantidad debe ser al menos 1");
+      setError("Quantity must be at least 1");
       return;
     }
     
@@ -58,7 +58,7 @@ const EditPurchaseDialog = ({ purchase, onClose, onSuccess }: EditPurchaseDialog
       
       onSuccess(updatedPurchase);
     } catch (err) {
-      setError("Error al actualizar la reserva");
+      setError("Error updating booking");
       console.error(err);
     } finally {
       setLoading(false);
@@ -69,12 +69,12 @@ const EditPurchaseDialog = ({ purchase, onClose, onSuccess }: EditPurchaseDialog
     <Dialog open={true} onOpenChange={onClose}>
       <DialogContent className="sm:max-w-[425px]">
         <DialogHeader>
-          <DialogTitle>Modificar Reserva</DialogTitle>
+          <DialogTitle>Edit Booking</DialogTitle>
         </DialogHeader>
         
         <form onSubmit={handleSubmit} className="space-y-4 py-4">
           <div className="space-y-2">
-            <Label htmlFor="cantidad">Número de Personas</Label>
+            <Label htmlFor="cantidad">Number of People</Label>
             <Input
               id="cantidad"
               type="number"
@@ -86,7 +86,7 @@ const EditPurchaseDialog = ({ purchase, onClose, onSuccess }: EditPurchaseDialog
           </div>
           
           <div className="space-y-2">
-            <Label>Fecha de Reserva</Label>
+            <Label>Booking Date</Label>
             <Popover>
               <PopoverTrigger asChild>
                 <Button
@@ -99,9 +99,9 @@ const EditPurchaseDialog = ({ purchase, onClose, onSuccess }: EditPurchaseDialog
                 >
                   <CalendarIcon className="mr-2 h-4 w-4" />
                   {fechaReservada ? (
-                    format(fechaReservada, "PPP", { locale: es })
+                    format(fechaReservada, "PPP", { locale: enUS })
                   ) : (
-                    <span>Seleccionar fecha</span>
+                    <span>Select date</span>
                   )}
                 </Button>
               </PopoverTrigger>
@@ -111,7 +111,7 @@ const EditPurchaseDialog = ({ purchase, onClose, onSuccess }: EditPurchaseDialog
                   selected={fechaReservada}
                   onSelect={setFechaReservada}
                   initialFocus
-                  locale={es}
+                  locale={enUS}
                 />
               </PopoverContent>
             </Popover>
@@ -123,11 +123,11 @@ const EditPurchaseDialog = ({ purchase, onClose, onSuccess }: EditPurchaseDialog
           
           <DialogFooter>
             <Button type="button" variant="outline" onClick={onClose} disabled={loading}>
-              Cancelar
+              Cancel
             </Button>
             <Button type="submit" disabled={loading}>
               {loading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-              Guardar Cambios
+              Save Changes
             </Button>
           </DialogFooter>
         </form>

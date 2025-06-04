@@ -107,7 +107,7 @@ const Checkout = () => {
       navigate("/purchases");
     } catch (error) {
       console.error('Error processing purchase:', error);
-      toast.error("Error processing purchase. Please try again.");
+      toast.error(`Error processing purchase: ${error instanceof Error ? error.message : 'Please try again.'}`);
     } finally {
       setIsSubmitting(false);
     }
